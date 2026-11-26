@@ -88,6 +88,11 @@ dash.calc('pl_mensual', {
     r.ebit = r.ebitda - r.amortizaciones;
     r.rai = r.ebit - r.bancarios + r.resultado_financiero;
     r.ganancias = y === 2025 ? -r.ganancias_fijo : -Math.max(r.rai, 0) * S.tasa_ganancias;
+    // versión sin gastos bancarios (Ganancias recalculado; 2025 usa el impuesto del balance)
+    r.fin_con_banc = r.resultado_financiero - r.bancarios;
+    r.rai_sin_banc = r.ebit + r.resultado_financiero;
+    r.ganancias_sin_banc = y === 2025 ? -r.ganancias_fijo : -Math.max(r.rai_sin_banc, 0) * S.tasa_ganancias;
+    r.neto_sin_banc = r.rai_sin_banc + r.ganancias_sin_banc;
     delete r.ganancias_fijo;
     r.resultado_neto = r.rai + r.ganancias;
     r.margen_bruto_pct = r.margen_bruto / r.ventas_netas;
@@ -104,7 +109,7 @@ dash.calc('pl_rangos', {
   description: 'Totales del P&L para cada combinación de mes desde / mes hasta.',
   inputs: ['pl_mensual'],
   fn: (pl) => {
-  const campos = ['ventas_netas', 'ventas_playa', 'ventas_otros', 'cmv', 'margen_bruto', 'margen_liquidos', 'margen_gnc', 'margen_otros', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'iibb', 'bancarios', 'honorarios', 'gastos_fijos_cierre', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'rai', 'ganancias', 'resultado_neto', 'litros_liquidos', 'gnc_m3', 'servicio_deuda'];
+  const campos = ['ventas_netas', 'ventas_playa', 'ventas_otros', 'cmv', 'margen_bruto', 'margen_liquidos', 'margen_gnc', 'margen_otros', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'iibb', 'bancarios', 'honorarios', 'gastos_fijos_cierre', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'fin_con_banc', 'rai', 'ganancias', 'resultado_neto', 'rai_sin_banc', 'ganancias_sin_banc', 'neto_sin_banc', 'litros_liquidos', 'gnc_m3', 'servicio_deuda'];
   const out = [];
   for (let i = 0; i < pl.length; i++) {
     const acc = Object.fromEntries(campos.map((c) => [c, 0]));
@@ -118,7 +123,7 @@ dash.calc('pl_rangos', {
       r.ebitda_pct = r.ebitda / r.ventas_netas;
       r.neto_pct = r.resultado_neto / r.ventas_netas;
       r.ebitda_mensual_prom = r.ebitda / r.meses;
-      campos.slice(0, 25).forEach((c) => { r['pct_' + c] = r[c] / r.ventas_netas; });
+      campos.filter((c) => !['litros_liquidos', 'gnc_m3', 'servicio_deuda'].includes(c)).forEach((c) => { r['pct_' + c] = r[c] / r.ventas_netas; });
       out.push(r);
     }
   }
@@ -200,13 +205,17 @@ dash.calc('pl_empresas', {
     r.rai = r.ebit - r.bancarios + r.resultado_financiero;
     if (r.ganancias == null) r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias;
     r.resultado_neto = r.rai + r.ganancias;
+    r.fin_con_banc = r.resultado_financiero - r.bancarios;
+    r.rai_sin_banc = r.ebit + r.resultado_financiero;
+    if (r.ganancias_sin_banc == null) r.ganancias_sin_banc = -Math.max(r.rai_sin_banc, 0) * S.tasa_ganancias;
+    r.neto_sin_banc = r.rai_sin_banc + r.ganancias_sin_banc;
     r.margen_bruto_pct = r.margen_bruto / r.ventas_netas; r.ebitda_pct = r.ebitda / r.ventas_netas; r.neto_pct = r.resultado_neto / r.ventas_netas;
     rows.push(r);
   };
   pl_shell.forEach((p) => fin({ empresa: 'shell', mes: p.mes, estimado: p.estimado, ventas_netas: p.ventas_netas, margen_bruto: p.margen_bruto,
     sueldos: p.sueldos, cargas_sociales: p.cargas_sociales, energia: p.energia, servicios: p.servicios || 0, alquiler: 0, seguros: 0,
     iibb: p.iibb, bancarios: p.bancarios, otros_gastos: p.honorarios + (p.gastos_fijos_cierre || 0) + (p.otros_gastos || 0),
-    amortizaciones: p.amortizaciones, resultado_financiero: p.resultado_financiero, ganancias: p.ganancias, servicio_deuda: p.servicio_deuda || 0 }));
+    amortizaciones: p.amortizaciones, resultado_financiero: p.resultado_financiero, ganancias: p.ganancias, ganancias_sin_banc: p.ganancias_sin_banc, servicio_deuda: p.servicio_deuda || 0 }));
   const nueva = (empresa, mes, v, margen, k, comun, part, d) => {
     const c = (cat) => (k[cat] || 0) + (comun[cat] || 0) * part;
     fin({ empresa, mes, estimado: false, ventas_netas: v, margen_bruto: v * margen,
@@ -226,8 +235,8 @@ dash.calc('pl_empresas', {
     }
   });
   // la deuda e intereses de YPF van completos a YPF
-  rows.filter((r) => r.empresa === 'ypf').forEach((r) => { r.resultado_financiero = -dY * S.tna_deuda / 12; r.rai = r.ebit - r.bancarios + r.resultado_financiero; r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias; r.resultado_neto = r.rai + r.ganancias; r.neto_pct = r.resultado_neto / r.ventas_netas; });
-  const campos = ['ventas_netas', 'cmv', 'margen_bruto', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'alquiler', 'seguros', 'iibb', 'bancarios', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'rai', 'ganancias', 'resultado_neto', 'servicio_deuda'];
+  rows.filter((r) => r.empresa === 'ypf').forEach((r) => { r.resultado_financiero = -dY * S.tna_deuda / 12; r.rai = r.ebit - r.bancarios + r.resultado_financiero; r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias; r.resultado_neto = r.rai + r.ganancias; r.neto_pct = r.resultado_neto / r.ventas_netas; r.fin_con_banc = r.resultado_financiero - r.bancarios; r.rai_sin_banc = r.ebit + r.resultado_financiero; r.ganancias_sin_banc = -Math.max(r.rai_sin_banc, 0) * S.tasa_ganancias; r.neto_sin_banc = r.rai_sin_banc + r.ganancias_sin_banc; });
+  const campos = ['ventas_netas', 'cmv', 'margen_bruto', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'alquiler', 'seguros', 'iibb', 'bancarios', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'fin_con_banc', 'rai', 'ganancias', 'resultado_neto', 'rai_sin_banc', 'ganancias_sin_banc', 'neto_sin_banc', 'servicio_deuda'];
   const agregar = (nombre, emps) => {
     const meses = [...new Set(rows.filter((r) => emps.includes(r.empresa)).map((r) => r.mes))].sort();
     meses.forEach((mes) => {
@@ -250,7 +259,7 @@ dash.calc('pl_empresas_rangos', {
   description: 'Totales del P&L de cada empresa para cada combinación de mes desde / mes hasta.',
   inputs: ['pl_empresas'],
   fn: (ple) => {
-  const campos = ['ventas_netas', 'cmv', 'margen_bruto', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'alquiler', 'seguros', 'iibb', 'bancarios', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'rai', 'ganancias', 'resultado_neto', 'servicio_deuda'];
+  const campos = ['ventas_netas', 'cmv', 'margen_bruto', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'alquiler', 'seguros', 'iibb', 'bancarios', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'fin_con_banc', 'rai', 'ganancias', 'resultado_neto', 'rai_sin_banc', 'ganancias_sin_banc', 'neto_sin_banc', 'servicio_deuda'];
   const meses = [];
   for (let y = 2025; y <= 2026; y++) for (let m = 1; m <= 12; m++) { if (y === 2026 && m > 10) break; meses.push(`${y}-${String(m).padStart(2, '0')}`); }
   const by = {}; ple.forEach((r) => { (by[r.empresa] ??= {})[r.mes] = r; });

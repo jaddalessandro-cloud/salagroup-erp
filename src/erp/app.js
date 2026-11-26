@@ -94,7 +94,7 @@ dash.draw('tb_empresa', (tb) => {
   if (d.status !== 'ok') { tb.replaceChildren(); return; }
   const [a, b] = SP.rango();
   const emp = dash.params().emp || 'shell';
-  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['bancarios', 'm'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['servicio_deuda', 'm']];
+  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['resultado_financiero', 'm'], ['bancarios', 'm'], ['resultado_neto', 'm'], ['neto_sin_banc', 'm'], ['servicio_deuda', 'm']];
   tb.replaceChildren(...d.data.filter((r) => r.empresa === emp && r.mes >= a && r.mes <= b).map((r) => {
     const tr = document.createElement('tr');
     tr.dataset.key = `${r.empresa},${r.mes}`;
@@ -187,7 +187,7 @@ dash.draw('tb_mensual', (tb) => {
   const d = dash.data('pl_mensual');
   if (d.status !== 'ok') { tb.replaceChildren(); return; }
   const [a, b] = SP.rango();
-  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['margen_bruto_pct', 'p'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['bancarios', 'm'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['base', 't']];
+  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['margen_bruto_pct', 'p'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['resultado_financiero', 'm'], ['bancarios', 'm'], ['resultado_neto', 'm'], ['neto_sin_banc', 'm'], ['base', 't']];
   tb.replaceChildren(...d.data.filter((r) => r.mes >= a && r.mes <= b).map((r) => {
     const tr = document.createElement('tr');
     tr.dataset.key = r.mes;

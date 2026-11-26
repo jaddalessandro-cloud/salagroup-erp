@@ -425,3 +425,4 @@ button.gs-cal-ev:hover { filter: brightness(1.1); }
 .gs-plc-parcial { color: var(--color-warn); }
 .gs-plc-acc { display: flex; gap: 8px; align-items: center; }
 .gs-dot.naranja { background: var(--st-naranja); }
+.sp-table tr.gs-fin-banc td { font-weight: 700; }
