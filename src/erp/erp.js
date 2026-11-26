@@ -46,6 +46,12 @@ ERP.pedirNombres = (ids, draw) => {
   }).catch(() => {});
 };
 ERP.puedeEditar = () => ERP.perfil !== 'Consulta';
+ERP.motivo = (ex) => {
+  const c = String((ex && ex.code) || '');
+  if (/permission-denied/.test(c)) return 'No se guardó: tu perfil no tiene permiso para cargar o modificar este registro. Si te cambiaron el perfil, cerrá sesión y volvé a ingresar.';
+  if (/unavailable|network|deadline/.test(c)) return 'No se guardó: sin conexión con el servidor. Revisá internet y volvé a intentar.';
+  return `No se guardó: ${(ex && ex.message) || 'error inesperado'}. Volvé a intentar.`;
+};
 
 /* ---------- escritura con historial ---------- */
 ERP.db = async () => { const db = await claude.use('db'); if (!db) throw new Error('sin db'); return db; };
@@ -110,7 +116,7 @@ ERP.boton = (fila, kind, ds, opts = {}) => {
     pop.onclick = (e) => e.stopPropagation();
     pop.appendChild(el('p', 'gs-pop-k', `Estado actual: ${fila.estado || '—'}`));
     if (fila.estado_fecha || fila.modificado) pop.appendChild(el('p', 'gs-pop-s', `Último cambio: ${fmtFH(fila.modificado || fila.estado_fecha)}${fila.modificado_por ? ' · ' + ERP.nombre(fila.modificado_por) : ''}`));
-    if (fila.comprobante) { const a = el('a', null, 'Ver comprobante'); a.href = fila.comprobante; a.target = '_blank'; a.rel = 'noopener'; pop.appendChild(a); }
+    if (typeof fila.comprobante === 'string' && /^(\/|https:\/\/)/.test(fila.comprobante)) { const a = el('a', null, 'Ver comprobante'); a.href = fila.comprobante; a.target = '_blank'; a.rel = 'noopener'; pop.appendChild(a); }
     const msg = el('p', 'gs-pop-err');
     msg.hidden = true;
     if (!ERP.puedeEditar()) { pop.appendChild(el('p', 'gs-pop-s', 'Tu perfil es de consulta: no puede cambiar estados.')); wrap.appendChild(pop); return; }
@@ -172,8 +178,11 @@ ERP.editar = (ds, fila) => {
   if (!form) return;
   for (const e of form.elements) {
     if (!e.name || e.name.startsWith('_') || e.type === 'file') continue;
-    e.value = fila[e.name] ?? '';
+    const v = fila[e.name] ?? '';
+    e.value = v;
+    if (e.tagName === 'SELECT' && v !== '' && e.value !== String(v)) { e.add(new Option(String(v), String(v))); e.value = String(v); }
   }
+  form.querySelectorAll('select[data-draw]').forEach((s) => dash.draw(s.dataset.draw));
   form.querySelectorAll('input[name="_rid"]').forEach((i) => { i.value = fila.id; });
   modoEdicion(form, true);
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -200,9 +209,9 @@ ERP.tabla = (tb, rows, o) => {
       else if (f === 'l') { if (typeof v === 'string' && /^https?:\/\//.test(v)) { const a = el('a', null, 'Abrir'); a.href = v; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); } }
       else if (f === 'adj') {
         const adj = Array.isArray(v) ? v : [];
-        adj.forEach((x, i) => { if (x && typeof x.url === 'string' && (x.url.startsWith('/_blob/') || /^https:\/\//.test(x.url))) { const a = el('a', 'gs-adj', x.nombre || `Doc ${i + 1}`); a.href = x.url; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); } });
+        adj.forEach((x, i) => { if (x && typeof x.url === 'string' && (/^(\/_blob\/|\/adjunto\/|https:\/\/)/.test(x.url))) { const a = el('a', 'gs-adj', x.nombre || `Doc ${i + 1}`); a.href = x.url; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); } });
         if (typeof r.link === 'string' && /^https?:\/\//.test(r.link)) { const a = el('a', 'gs-adj', 'Drive'); a.href = r.link; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); }
-        if (typeof r.comprobante === 'string' && r.comprobante) { const a = el('a', 'gs-adj', 'Comprobante'); a.href = r.comprobante; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); }
+        if (typeof r.comprobante === 'string' && /^(\/|https:\/\/)/.test(r.comprobante)) { const a = el('a', 'gs-adj', 'Comprobante'); a.href = r.comprobante; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); }
       } else if (f === 'u') td.textContent = ERP.nombre(v);
       else { td.textContent = v == null ? '' : String(v); if (o.anchas && o.anchas.includes(c)) { td.style.whiteSpace = 'normal'; td.style.minWidth = '170px'; } }
       tr.appendChild(td);
@@ -660,7 +669,9 @@ dash.draw('migas', (nav) => {
         const db = await ERP.db();
         const ahora = new Date().toISOString();
         const prev = rid ? ((dash.data(ds).data || []).find((r) => r.id === rid) || {}) : {};
-        if (archivo) fila.adjuntos = [...(Array.isArray(prev.adjuntos) ? prev.adjuntos : []), await ERP.subirAdjunto(archivo)];
+        let sinAdj = '';
+        if (archivo) { try { fila.adjuntos = [...(Array.isArray(prev.adjuntos) ? prev.adjuntos : []), await ERP.subirAdjunto(archivo)]; } catch (ex) { sinAdj = (ex && ex.message) || 'no se pudo subir el archivo'; } }
+        form.dataset.sinAdj = sinAdj;
         if (ERP.antes && ERP.antes[ds]) ERP.antes[ds](fila, prev, !!rid);
         if (rid) {
           const datos = { ...fila, modificado: ahora, modificado_por: ERP.uid || '' };
@@ -682,8 +693,8 @@ dash.draw('migas', (nav) => {
         form.reset();
         form.querySelectorAll('input[name="_rid"]').forEach((i) => { i.value = ''; });
         modoEdicion(form, false);
-        ok.forEach((m) => { m.hidden = false; });
-      } catch { err.forEach((m) => { m.hidden = false; }); }
+        ok.forEach((m) => { m.textContent = form.dataset.sinAdj ? `Guardado, pero sin el adjunto: ${form.dataset.sinAdj}` : 'Guardado.'; m.style.color = form.dataset.sinAdj ? 'var(--color-warn)' : ''; m.hidden = false; });
+      } catch (ex) { err.forEach((m) => { m.textContent = ERP.motivo(ex); m.hidden = false; }); }
       botones.forEach((b) => { b.disabled = false; });
     });
   });

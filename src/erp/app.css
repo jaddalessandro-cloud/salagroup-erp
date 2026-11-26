@@ -369,3 +369,4 @@ tbody[data-ds] td:first-child { cursor: pointer; color: var(--sp-acc); font-weig
 .gs-bien-sub { margin: 0; color: #9FB4C6; font-size: 14px; letter-spacing: .04em; }
 .gs-bien-btn { margin-top: 10px; padding: 12px 28px !important; font-size: 15px !important; background: var(--sg-sky, #29B8EC) !important; color: #0E2A47 !important; }
 @media print { .gs-bienvenida { display: none !important; } }
+.gs-tercero-ayuda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 400; }

@@ -313,7 +313,7 @@ dash.draw('plan_ficha', (div) => {
   const cu = Array.isArray(p.cuotas) ? p.cuotas : [];
   const cab = e2('div', 'gs-ficha-cab');
   cab.append(e2('h3', null, `${p.nombre} · ${p.tipo || ''}`), e2('p', 'sp-note', `${p.acreedor || p.banco || ''} · ${p.estacion || ''} · capital ${window.SP.$(n2(p.capital))} · interés ${window.SP.$(n2(p.interes_total))} · ${cu.length} cuotas ${p.frecuencia || 'mensuales'}`));
-  if (Array.isArray(p.adjuntos)) p.adjuntos.forEach((a) => { if (a && typeof a.url === 'string' && a.url.startsWith('/_blob/')) { const l = e2('a', 'gs-adj', a.nombre); l.href = a.url; l.target = '_blank'; cab.appendChild(l); } });
+  if (Array.isArray(p.adjuntos)) p.adjuntos.forEach((a) => { if (a && typeof a.url === 'string' && /^(\/_blob\/|\/adjunto\/)/.test(a.url)) { const l = e2('a', 'gs-adj', a.nombre); l.href = a.url; l.target = '_blank'; cab.appendChild(l); } });
   const tabla = e2('table', 'sp-table gs-left');
   const th = e2('thead'); const trh = e2('tr'); ['Cuota', 'Vence', 'Capital', 'Interés', 'Importe', 'Pagado', 'Saldo', 'Estado', ''].forEach((t) => trh.appendChild(e2('th', null, t))); th.appendChild(trh);
   const tb = e2('tbody');
@@ -783,7 +783,7 @@ dash.draw('ficha', (div) => {
   const dl = e2('dl', 'gs-ficha-dl');
   Object.entries(fila).filter(([k, v]) => !['id', 'cuotas', 'adjuntos'].includes(k) && v !== '' && v != null && typeof v !== 'object').forEach(([k, v]) => { dl.append(e2('dt', null, k.replace(/_/g, ' ')), e2('dd', null, /^\d{4}-\d{2}-\d{2}/.test(String(v)) ? (String(v).length > 10 ? `${f2(String(v).slice(0, 10))} ${String(v).slice(11, 16)}` : f2(String(v))) : typeof v === 'number' && /importe|monto|total|saldo|capital|precio|remuner|costo|presupuesto|inversion/.test(k) ? window.SP.$(v) : String(v))); });
   const adj = e2('div');
-  (Array.isArray(fila.adjuntos) ? fila.adjuntos : []).forEach((a) => { if (a && typeof a.url === 'string' && a.url.startsWith('/_blob/')) { const l = e2('a', 'gs-adj', a.nombre); l.href = a.url; l.target = '_blank'; adj.appendChild(l); } });
+  (Array.isArray(fila.adjuntos) ? fila.adjuntos : []).forEach((a) => { if (a && typeof a.url === 'string' && /^(\/_blob\/|\/adjunto\/)/.test(a.url)) { const l = e2('a', 'gs-adj', a.nombre); l.href = a.url; l.target = '_blank'; adj.appendChild(l); } });
   const nombre = String(fila.razon_social || fila.proveedor || fila.tercero || fila.cliente || fila.beneficiario || '').toLowerCase().trim();
   const rel = e2('ul', 'gs-dia-lista');
   if (nombre && ['clientes', 'proveedores'].includes(ds)) {
@@ -1005,6 +1005,21 @@ E2.despues.pagos_prov = async (db, pago) => {
   if (estado !== oc.estado) { await db.doc(`data/erp/ordenes_compra/${oc.id}`).update({ estado, modificado: new Date().toISOString(), modificado_por: E2.uid || '' }); await E2.log(db, 'ordenes_compra', oc.id, 'Cambio de estado', `${oc.estado || '—'} → ${estado} (pagos ${window.SP.$(total)} de ${window.SP.$(n2(oc.monto))})`); }
 };
 
+/* facturas: proveedor (recibidas) o cliente (emitidas) elegido de los cargados */
+dash.draw('sel_tercero', (s) => {
+  const f = s.form; const t = f && f.elements.namedItem('tipo');
+  const emitida = !!t && t.value === 'Emitida';
+  const lista = [...new Set(rows2(emitida ? 'clientes' : 'proveedores').map((r) => String(r.razon_social || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const actual = s.value;
+  const ops = [new Option(lista.length ? (emitida ? 'Elegí un cliente…' : 'Elegí un proveedor…') : (emitida ? 'No hay clientes cargados' : 'No hay proveedores cargados'), '')];
+  lista.forEach((n) => ops.push(new Option(n, n)));
+  if (actual && !lista.includes(actual)) ops.push(new Option(`${actual} (no está en la lista)`, actual));
+  s.replaceChildren(...ops); s.value = actual;
+});
+document.querySelectorAll('select[data-draw="sel_tercero"]').forEach((s) => {
+  const t = s.form && s.form.elements.namedItem('tipo');
+  if (t) t.addEventListener('change', () => { s.value = ''; dash.draw('sel_tercero'); });
+});
 dash.draw('lista_prov', (dl) => {
   const n = [...new Set([...rows2('proveedores').map((r) => r.razon_social), ...rows2('ordenes_compra').map((r) => r.proveedor)].filter(Boolean))].sort();
   dl.replaceChildren(...n.map((x) => { const o = document.createElement('option'); o.value = x; return o; }));

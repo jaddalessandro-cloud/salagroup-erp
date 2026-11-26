@@ -34,7 +34,14 @@ export function instalarClaude(ctx, datos, user, role) {
     upload: async (file) => {
       if (role === 'consulta') throw new Error('Tu perfil es de consulta.');
       const ruta = `adjuntos/${user.uid}/${Date.now()}_${limpio(file.name)}`;
-      await uploadBytes(ref(ctx.st, ruta), file, { contentType: file.type || 'application/octet-stream' });
+      if (file.size > 20 * 1024 * 1024) throw new Error('el archivo supera los 20 MB');
+      try {
+        await uploadBytes(ref(ctx.st, ruta), file, { contentType: file.type || 'application/octet-stream' });
+      } catch (e) {
+        const c = String((e && e.code) || '');
+        if (c === 'storage/unauthorized') throw new Error('tu perfil no puede subir adjuntos');
+        throw new Error('los adjuntos todavía no están habilitados en el servidor (falta activar Storage en Firebase)');
+      }
       return { id: ruta, url: `/adjunto/${encodeURIComponent(ruta)}` };
     },
   };

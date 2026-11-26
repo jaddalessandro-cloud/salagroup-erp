@@ -37,7 +37,7 @@ dash.calc('pl_mensual', {
     const f = m < 8 ? Math.pow(1 - S.deflactor_mensual, 8 - m) : 1;
     const h = m < 8 ? ago : hoja[mes];
     let vl = 0, ml = 0, lit = 0;
-    PROD.forEach((p) => { const l = vol[mes]?.[p] || 0; lit += l; vl += l * h[p].precio_shell * f; ml += l * h[p].ganancia_litro * f; });
+    PROD.forEach((p) => { const l = vol[mes]?.[p] || 0; const hp = (h && h[p]) || {}; lit += l; vl += l * (hp.precio_shell || 0) * f; ml += l * (hp.ganancia_litro || 0) * f; });
     const m3 = vol[mes]?.GNC || 0;
     const vg = m3 * precioGncAgo * f, mg = m3 * (precioGncAgo * f - costoGasM3);
     return { lit, m3, ventas_liq: vl / 1.21, margen_liq: ml / 1.21, ventas_gnc: vg / 1.21, margen_gnc: mg / 1.21 };
