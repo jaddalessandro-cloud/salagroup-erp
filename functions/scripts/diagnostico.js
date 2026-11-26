@@ -20,7 +20,9 @@ for (const c of erp) out(`- ${c.id}: ${(await c.count().get()).data().count}`);
 
 const us = await db.collection('usuarios').get();
 out(`\n## Usuarios en la base: ${us.size}`);
-const lista = await auth.listUsers(100);
+us.docs.forEach((d) => out(`- ${d.get('usuario')} · perfil=${d.get('perfil')} · activo=${d.get('activo')} · clave provisoria=${d.get('clave_provisoria')}`));
+let lista = { users: [] };
+try { lista = await auth.listUsers(100); } catch (e) { out(`(sin permiso para leer Authentication: ${e.code || e.message})`); }
 out(`## Usuarios en Authentication: ${lista.users.length}`);
 for (const u of lista.users) {
   const doc = us.docs.find((d) => d.id === u.uid);
