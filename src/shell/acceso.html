@@ -1,0 +1,50 @@
+<div class="ac" id="acceso">
+  <div class="ac-box ac-cargando" id="ac-cargando">
+    <svg class="ac-logo" viewBox="215 200 1960 500" role="img" aria-label="Sala Group"><use href="#sg-logo"/></svg>
+    <div class="ac-spin" aria-hidden="true"></div>
+    <p class="ac-nota" role="status">Cargando el sistema…</p>
+  </div>
+
+  <form class="ac-box" id="ac-login" novalidate hidden>
+    <svg class="ac-logo" viewBox="215 200 1960 500" role="img" aria-label="Sala Group"><use href="#sg-logo"/></svg>
+    <p class="ac-sub">Sistema de información y gestión</p>
+    <label class="ac-lab" for="l-usuario">USUARIO</label>
+    <input class="ac-in" id="l-usuario" name="usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+    <label class="ac-lab" for="l-clave">CONTRASEÑA</label>
+    <span class="ac-pw"><input class="ac-in" type="password" id="l-clave" name="clave" autocomplete="current-password" required><button type="button" class="ac-ojo" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="ac-ojo-si" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ac-ojo-no" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10.6 10.6 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg></button></span>
+    <p class="ac-error" id="l-error" role="alert" hidden></p>
+    <button type="submit" class="ac-btn" id="l-btn">Ingresar</button>
+    <p class="ac-nota">¿Olvidaste tu contraseña? Pedile a un Administrador una contraseña provisoria.</p>
+  </form>
+
+  <form class="ac-box" id="ac-clave" novalidate hidden>
+    <svg class="ac-logo" viewBox="215 200 1960 500" role="img" aria-label="Sala Group"><use href="#sg-logo"/></svg>
+    <h1>Cambiá tu contraseña</h1>
+    <p class="ac-nota" id="c-intro-obl" style="text-align:left">Es tu primer ingreso o tenés una contraseña provisoria. Para proteger la información, elegí una contraseña personal antes de continuar.</p>
+    <p class="ac-nota" id="c-intro-vol" style="text-align:left" hidden>Ingresá tu contraseña actual y la nueva.</p>
+    <label class="ac-lab" for="c-actual">CONTRASEÑA ACTUAL</label>
+    <span class="ac-pw"><input class="ac-in" type="password" id="c-actual" autocomplete="current-password" required><button type="button" class="ac-ojo" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="ac-ojo-si" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ac-ojo-no" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10.6 10.6 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg></button></span>
+    <label class="ac-lab" for="c-nueva">CONTRASEÑA NUEVA</label>
+    <span class="ac-pw"><input class="ac-in" type="password" id="c-nueva" autocomplete="new-password" minlength="10" required><button type="button" class="ac-ojo" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="ac-ojo-si" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ac-ojo-no" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10.6 10.6 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg></button></span>
+    <label class="ac-lab" for="c-otra">REPETIR CONTRASEÑA NUEVA</label>
+    <input class="ac-in" type="password" id="c-otra" autocomplete="new-password" minlength="10" required>
+    <ul class="ac-reglas"><li>Al menos 10 caracteres, con letras y números.</li><li>Que no contenga tu usuario ni tu nombre.</li></ul>
+    <p class="ac-error" id="c-error" role="alert" hidden></p>
+    <p class="ac-ok" id="c-ok" role="status" hidden>Contraseña actualizada.</p>
+    <button type="submit" class="ac-btn" id="c-btn">Guardar contraseña</button>
+    <button type="button" class="ac-btn2" id="c-cancelar">Salir</button>
+  </form>
+
+  <div class="ac-box" id="ac-sin-perfil" hidden>
+    <svg class="ac-logo" viewBox="215 200 1960 500" role="img" aria-label="Sala Group"><use href="#sg-logo"/></svg>
+    <p class="ac-error" role="alert">Tu usuario no tiene un perfil habilitado en el sistema. Consultá con un Administrador.</p>
+    <button type="button" class="ac-btn2 ac-salir">Salir</button>
+  </div>
+
+  <div class="ac-box" id="ac-error" hidden>
+    <svg class="ac-logo" viewBox="215 200 1960 500" role="img" aria-label="Sala Group"><use href="#sg-logo"/></svg>
+    <p class="ac-error" role="alert" id="err-texto">No se pudo cargar el sistema.</p>
+    <button type="button" class="ac-btn ac-reintentar">Reintentar</button>
+    <button type="button" class="ac-btn2 ac-salir">Salir</button>
+  </div>
+</div>

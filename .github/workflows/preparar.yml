@@ -1,0 +1,58 @@
+name: Preparar proyecto (una sola vez)
+
+# Deja listo el proyecto de Firebase la primera vez:
+#  1. habilita las APIs que usa el sistema (Drive, programador, etc.)
+#  2. crea el depósito de respaldos (se guardan 30 días) y le da permiso a la cuenta del servidor
+#  3. crea los usuarios iniciales (Hernán, Javier y Christian) como Administradores,
+#     con la contraseña provisoria del secreto CLAVE_INICIAL, que deben cambiar al primer ingreso.
+# Se puede volver a correr: lo que ya existe no se toca.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    env:
+      PROYECTO: ${{ vars.FIREBASE_PROJECT || 'salagroup-erp' }}
+      REGION: southamerica-east1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: functions
+      - name: Credencial de Google
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: APIs
+        run: |
+          gcloud services enable --project "$PROYECTO" \
+            drive.googleapis.com cloudscheduler.googleapis.com cloudfunctions.googleapis.com run.googleapis.com \
+            eventarc.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com \
+            identitytoolkit.googleapis.com firebasestorage.googleapis.com pubsub.googleapis.com
+      - name: Respaldos
+        run: |
+          BUCKET="gs://${PROYECTO}-respaldos"
+          gcloud storage buckets describe "$BUCKET" >/dev/null 2>&1 || \
+            gcloud storage buckets create "$BUCKET" --project "$PROYECTO" --location "$REGION" --uniform-bucket-level-access
+          echo '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]}' > vida.json
+          gcloud storage buckets update "$BUCKET" --lifecycle-file=vida.json
+          NUM=$(gcloud projects describe "$PROYECTO" --format='value(projectNumber)')
+          CUENTA="${NUM}-compute@developer.gserviceaccount.com"
+          gcloud projects add-iam-policy-binding "$PROYECTO" --member "serviceAccount:${CUENTA}" --role roles/datastore.importExportAdmin --condition=None >/dev/null
+          gcloud storage buckets add-iam-policy-binding "$BUCKET" --member "serviceAccount:${CUENTA}" --role roles/storage.objectAdmin >/dev/null
+          echo "### Cuenta del servidor" >> "$GITHUB_STEP_SUMMARY"
+          echo "Compartí la carpeta **ESTACIONES** de Google Drive, como **Lector**, con: \`${CUENTA}\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Usuarios iniciales
+        env:
+          CLAVE_INICIAL: ${{ secrets.CLAVE_INICIAL }}
+          FIREBASE_PROJECT: ${{ env.PROYECTO }}
+          GCLOUD_PROJECT: ${{ env.PROYECTO }}
+        run: node scripts/usuarios-iniciales.js
+        working-directory: functions

@@ -1,0 +1,19 @@
+{
+  "name": "salagroup-erp",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sala Group — Sistema de información y gestión (Firebase)",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "npm --prefix functions test",
+    "e2e": "node tests/e2e.cjs",
+    "emuladores": "node tools/build.mjs && firebase emulators:start --project demo-salagroup",
+    "deploy": "node tools/build.mjs && firebase deploy"
+  },
+  "devDependencies": {
+    "d3": "7.9.0",
+    "esbuild": "0.28.2",
+    "firebase": "13.4.0"
+  }
+}

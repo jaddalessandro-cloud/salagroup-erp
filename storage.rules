@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Adjuntos y comprobantes: solo personas activas los leen; Administrador y Gerencia los suben.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function activo() {
+      return request.auth != null && request.auth.token.get('temp', false) != true
+        && request.auth.token.get('role', '') in ['admin', 'gerencia', 'consulta'];
+    }
+    function editor() { return activo() && request.auth.token.role in ['admin', 'gerencia']; }
+
+    match /adjuntos/{uid}/{archivo} {
+      allow read: if activo();
+      allow create: if editor() && request.auth.uid == uid && request.resource.size < 20 * 1024 * 1024;
+      allow update, delete: if false;
+    }
+    match /{otros=**} {
+      allow read, write: if false;
+    }
+  }
+}

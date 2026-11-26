@@ -1,0 +1,54 @@
+rules_version = '2';
+
+// Permisos del ERP Sala Group, controlados en el servidor.
+// El perfil de cada persona viaja en su credencial (custom claim "role"),
+// que solo pueden asignar las funciones del servidor (functions/index.js).
+//   admin     → Administrador: lee y modifica todo, administra usuarios y configuración.
+//   gerencia  → Gerencia: lee todo, da de alta, modifica y da de baja registros; no administra usuarios ni configuración.
+//   consulta  → Consulta: solo lectura.
+// Mientras la persona tenga una contraseña provisoria (claim "temp") no accede a ningún dato.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signed()   { return request.auth != null; }
+    function role()     { return request.auth.token.get('role', ''); }
+    function activo()   { return signed() && request.auth.token.get('temp', false) != true && role() in ['admin', 'gerencia', 'consulta']; }
+    function isAdmin()  { return activo() && role() == 'admin'; }
+    function editor()   { return activo() && role() in ['admin', 'gerencia']; }
+    function tamOk()    { return request.resource.data.keys().size() < 200; }
+
+    // Registros del sistema: data/erp/<colección>/<id>
+    match /data/erp/{col}/{id} {
+      allow read: if activo();
+      allow create, update: if editor() && tamOk() && !(col in ['historial', 'config']);
+      allow delete: if editor() && !(col in ['historial', 'config']);
+    }
+
+    // Historial de operaciones: solo se agrega, a nombre de quien opera; nunca se edita ni se borra.
+    match /data/erp/historial/{id} {
+      allow create: if editor() && request.resource.data.usuario == request.auth.uid;
+    }
+
+    // Configuración (avisos, etc.): solo Administrador.
+    match /data/erp/config/{id} {
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Planillas importadas (P&L, cheques, deudas, etc.) y carpetas de Drive sincronizadas.
+    match /datasets/{id} {
+      allow read: if activo();
+      allow write: if isAdmin() && !id.matches('drive_.*');
+    }
+
+    // Personas del sistema: las escribe solo el servidor.
+    match /usuarios/{uid} {
+      allow read: if activo() || (signed() && request.auth.uid == uid);
+      allow write: if false;
+    }
+
+    // Registro de accesos y auditoría: los escribe solo el servidor; los lee Administrador.
+    match /accesos/{id}   { allow read: if isAdmin(); allow write: if false; }
+    match /auditoria/{id} { allow read: if isAdmin(); allow write: if false; }
+    match /sistema/{id}   { allow read: if activo(); allow write: if false; }
+  }
+}

@@ -1,0 +1,50 @@
+<h2>Usuarios y permisos</h2>
+<div class="sp-card sp-tw" id="us-card">
+<p class="sp-take gs-take-s">Tu perfil: <b id="us-mi-perfil">—</b></p>
+<table class="sp-table gs-left us-tabla"><thead><tr><th>Usuario</th><th>Nombre</th><th>Perfil</th><th>Estado</th><th>Último ingreso</th><th></th></tr></thead><tbody id="us-filas"></tbody></table>
+<p class="us-msg" id="us-msg" role="status" hidden></p>
+<div id="us-clave-box" hidden>
+<p class="sp-take gs-take-s">Contraseña provisoria de <b id="us-clave-quien"></b>. Se muestra una sola vez: entregásela en persona o por un canal privado. La persona va a tener que cambiarla al ingresar.</p>
+<p class="us-clave" id="us-clave"></p>
+<button type="button" class="gs-btn" id="us-clave-ok">Listo, ya la entregué</button>
+</div>
+</div>
+<form class="sp-card" id="us-nuevo" data-solo-admin hidden>
+<h3>Nuevo usuario</h3>
+<div class="gs-fields">
+<label>Usuario<input name="usuario" required maxlength="30" pattern="[a-z0-9][a-z0-9._\-]{2,29}" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ej.: mperez"></label>
+<label>Nombre<input name="nombre" required maxlength="80" placeholder="Nombre y apellido"></label>
+<label>Perfil<select class="dash-select" name="perfil"><option value="gerencia">Gerencia</option><option value="admin">Administrador</option><option value="consulta">Consulta</option></select></label>
+</div>
+<button type="submit" class="gs-btn">Crear usuario</button>
+<p class="us-msg" id="us-nuevo-msg" role="status" hidden></p>
+</form>
+<p class="sp-note">Los permisos se controlan en el servidor y en la base de datos, no solo en la pantalla. <b>Administrador</b>: todo, incluidos usuarios, configuración e importación de datos. <b>Gerencia</b>: ve todo y da de alta, modifica y da de baja registros; no administra usuarios ni configuración. <b>Consulta</b>: solo lectura. Las contraseñas se guardan cifradas por Firebase Authentication; nadie, ni siquiera un Administrador, puede verlas.</p>
+
+<h2>Google Drive · carpeta ESTACIONES</h2>
+<div class="sp-card">
+<p class="sp-take gs-take-s" id="drive-estado">—</p>
+<button type="button" class="gs-btn" id="drive-sync" data-solo-admin hidden>Sincronizar ahora</button>
+<p class="us-msg" id="drive-msg" role="status" hidden></p>
+<p class="sp-note">La sincronización es de solo lectura: el sistema lista carpetas y archivos para clasificarlos, y nunca crea, mueve, modifica ni borra documentos de Drive. Corre sola cada 6 horas.</p>
+</div>
+
+<div data-solo-admin hidden>
+<h2>Respaldos y registro de seguridad</h2>
+<div class="sp-card">
+<p class="sp-take gs-take-s" id="resp-estado">—</p>
+<button type="button" class="gs-btn" id="exp-todo">Descargar copia completa (JSON)</button>
+<p class="sp-note">La copia descargada incluye todas las planillas y registros, y se puede volver a importar abajo.</p>
+</div>
+<div class="sp-grid2">
+<div class="sp-card sp-tw"><h3>Accesos</h3><table class="sp-table gs-left"><thead><tr><th>Fecha</th><th>Persona</th><th>Evento</th><th>Detalle</th><th>IP</th></tr></thead><tbody id="acc-filas"></tbody></table></div>
+<div class="sp-card sp-tw"><h3>Auditoría de cambios</h3><table class="sp-table gs-left"><thead><tr><th>Fecha</th><th>Persona</th><th>Acción</th><th>Registro</th><th>Campos</th></tr></thead><tbody id="aud-filas"></tbody></table></div>
+</div>
+<h2>Importar datos</h2>
+<form class="sp-card" id="imp-form">
+<div class="gs-fields"><label class="gs-wide">Paquete de datos (.json)<input type="file" accept="application/json,.json" required></label></div>
+<button type="submit" class="gs-btn">Importar</button>
+<p class="us-msg" id="imp-msg" role="status" hidden></p>
+<p class="sp-note">Reemplaza las planillas incluidas en el paquete y agrega o actualiza los registros por su identificador. No borra registros que no estén en el paquete.</p>
+</form>
+</div>

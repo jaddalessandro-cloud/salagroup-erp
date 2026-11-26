@@ -1,0 +1,43 @@
+name: Publicar
+
+# Prueba y publica el sistema en Firebase cada vez que cambia la rama main.
+# Requiere el secreto FIREBASE_SERVICE_ACCOUNT (ver README → Puesta en marcha).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    env:
+      PROYECTO: ${{ vars.FIREBASE_PROJECT || 'salagroup-erp' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: functions
+      - name: Pruebas
+        run: npm test
+      - name: Armar
+        run: npm run build
+      - name: Credencial de Google
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Publicar en Firebase
+        run: npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --non-interactive --force

@@ -1,0 +1,10 @@
+node_modules/
+public/
+functions/node_modules/
+*.log
+.firebase/
+# Datos de la empresa: nunca se suben al repositorio
+datos/
+*.datos.json
+service-account*.json
+.env
