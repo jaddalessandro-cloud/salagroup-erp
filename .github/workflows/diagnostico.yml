@@ -25,6 +25,8 @@ jobs:
           workload_identity_provider: projects/41294063283/locations/global/workloadIdentityPools/github-pool/providers/github-provider
           service_account: github-deploy@erp-sala-group.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Configuración publicada de la página
+        run: curl -s https://${PROYECTO}.web.app/__/firebase/init.json | grep -v apiKey
       - name: Bases de Firestore
         run: gcloud firestore databases list --project "$PROYECTO" --format="table(name,type,locationId)" || true
       - name: Contenido
