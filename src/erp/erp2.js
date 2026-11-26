@@ -889,8 +889,18 @@ const r2 = (x) => Math.round(x * 100) / 100;
 montar('impuestos', (box) => {
   const form = box.closest('form'); if (!form) return;
   const campoTotal = box.dataset.total || 'total';
-  const num = (name, label, ro) => { const l = e2('label', null, label); const i = e2('input'); i.type = 'number'; i.step = '0.01'; i.name = name; if (ro) { i.readOnly = true; i.tabIndex = -1; i.className = 'gs-imp-calc'; } else i.min = '0'; l.appendChild(i); return [l, i]; };
+  const num = (name, label, ro) => { const l = e2('label', null, label); const i = e2('input'); i.type = 'number'; i.step = '0.01'; i.name = name; i.inputMode = 'decimal'; if (ro) { i.readOnly = true; i.tabIndex = -1; i.className = 'gs-imp-calc'; } else i.min = '0'; l.appendChild(i); return [l, i]; };
   box.appendChild(e2('p', 'gs-imp-tit', 'Importes e impuestos'));
+  box.appendChild(e2('p', 'gs-imp-ayuda', 'Escribí el subtotal y los impuestos directamente, o completá el detalle por alícuota y se calculan solos. El total siempre se calcula.'));
+  // carga directa: subtotal, impuestos y total
+  const g3 = e2('div', 'gs-imp-grid gs-imp-tot');
+  const [lS, sub] = num('neto', 'Subtotal (neto) $');
+  const [lI, imp] = num('impuestos', 'Impuestos $');
+  const [lT, tot] = num(campoTotal, 'Total $', true);
+  const lD = e2('label', 'gs-imp-det', 'Detalle de impuestos'); const det = e2('input'); det.name = 'detalle_impuestos'; det.maxLength = 200; det.placeholder = 'Ej.: IVA 21 %, percepción IIBB 3 %'; lD.appendChild(det);
+  g3.append(lS, lI, lT, lD);
+  // detalle por alícuota (opcional)
+  const sum = e2('details', 'gs-imp-mas'); sum.appendChild(e2('summary', null, 'Detalle por alícuota y percepciones (opcional)'));
   const g1 = e2('div', 'gs-imp-grid');
   const ivas = {};
   IMP_IVA.forEach(([k, t]) => {
@@ -898,40 +908,48 @@ montar('impuestos', (box) => {
     const [l1, n] = num(`neto_${k}`, `Neto gravado ${pct}%`);
     const [l2, iva] = num(`iva_${k}`, `IVA ${pct}%`);
     ivas[k] = { n, iva, t };
-    iva.addEventListener('input', () => { iva.dataset.manual = '1'; calc(); });
-    n.addEventListener('input', () => { if (!iva.dataset.manual) iva.value = n.value === '' ? '' : r2(Number(n.value) * t); calc(); });
+    iva.addEventListener('input', () => { iva.dataset.manual = '1'; delete imp.dataset.manual; calc(); });
+    n.addEventListener('input', () => { if (!iva.dataset.manual) iva.value = n.value === '' ? '' : r2(Number(n.value) * t); delete sub.dataset.manual; delete imp.dataset.manual; calc(); });
     g1.append(l1, l2);
   });
   const g2 = e2('div', 'gs-imp-grid');
-  const otros = IMP_OTROS.map(([k, t]) => { const [l, i] = num(k, t); i.addEventListener('input', () => calc()); g2.appendChild(l); return i; });
-  const g3 = e2('div', 'gs-imp-grid gs-imp-tot');
-  const [lS, sub] = num('neto', 'Subtotal (neto gravado)', true);
-  const [lI, imp] = num('impuestos', 'Total impuestos', true);
-  const [lT, tot] = num(campoTotal, 'Total', true);
+  const otros = IMP_OTROS.map(([k, t]) => { const [l, i] = num(k, t); i.addEventListener('input', () => { if (!['no_gravado', 'exento'].includes(k)) delete imp.dataset.manual; calc(); }); g2.appendChild(l); return i; });
+  sum.append(g1, g2);
   const nota = e2('p', 'gs-imp-nota'); nota.hidden = true;
-  g3.append(lS, lI, lT);
-  box.append(g1, g2, g3, nota);
+  box.append(g3, sum, nota);
+  sub.addEventListener('input', () => { sub.dataset.manual = '1'; calc(); });
+  imp.addEventListener('input', () => { imp.dataset.manual = '1'; calc(); });
   const v = (i) => Number(i.value) || 0;
   const conDetalle = () => IMP_CAMPOS.some((k) => form.elements.namedItem(k) && form.elements.namedItem(k).value !== '');
   function calc() {
-    const neto = Object.values(ivas).reduce((a, x) => a + v(x.n), 0);
-    const iva = Object.values(ivas).reduce((a, x) => a + v(x.iva), 0);
+    const netoDet = Object.values(ivas).reduce((a, x) => a + v(x.n), 0);
+    const ivaDet = Object.values(ivas).reduce((a, x) => a + v(x.iva), 0);
     const [ng, ex, pi, pb, ii, oi] = otros.map(v);
-    sub.value = r2(neto); imp.value = r2(iva + pi + pb + ii + oi); tot.value = r2(neto + iva + ng + ex + pi + pb + ii + oi);
+    const neto = sub.dataset.manual ? v(sub) : netoDet;
+    const impuestos = imp.dataset.manual ? v(imp) : ivaDet + pi + pb + ii + oi;
+    if (!sub.dataset.manual) sub.value = netoDet ? r2(netoDet) : '';
+    if (!imp.dataset.manual) imp.value = impuestos ? r2(impuestos) : '';
+    tot.value = r2(neto + impuestos + ng + ex);
     nota.hidden = true;
   }
-  form.addEventListener('reset', () => setTimeout(() => { Object.values(ivas).forEach((x) => { delete x.iva.dataset.manual; }); nota.hidden = true; }));
+  form.addEventListener('reset', () => setTimeout(() => { [sub, imp, ...Object.values(ivas).map((x) => x.iva)].forEach((x) => { delete x.dataset.manual; }); sum.open = false; nota.hidden = true; }));
   form.addEventListener('gs-cargado', () => {
+    [sub, imp].forEach((x) => { delete x.dataset.manual; });
     Object.values(ivas).forEach((x) => { delete x.iva.dataset.manual; if (x.iva.value !== '' && x.n.value !== '' && Math.abs(v(x.iva) - r2(v(x.n) * x.t)) > 0.01) x.iva.dataset.manual = '1'; });
-    if (conDetalle()) calc();
-    else if (v(tot) > 0) { nota.textContent = 'Este registro se cargó sin detalle de impuestos. Completá el detalle para recalcular el total.'; nota.hidden = false; }
+    sum.open = conDetalle();
+    if (!conDetalle()) {
+      // registro cargado sin detalle: se respetan subtotal e impuestos tal como están
+      if (sub.value === '' && v(tot) > 0) sub.value = r2(v(tot) - v(imp));
+      sub.dataset.manual = '1'; imp.dataset.manual = '1';
+    }
+    calc();
   });
-  // el total es obligatorio y mayor a cero (los campos calculados no los valida el navegador)
+  // el total es obligatorio y mayor a cero (el navegador no valida los campos calculados)
   form.addEventListener('submit', (e) => {
     if (v(tot) > 0) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    nota.textContent = 'Cargá al menos un importe: el total no puede ser cero.'; nota.hidden = false;
-    const primero = ivas['21'].n; primero.focus();
+    nota.textContent = 'Cargá al menos el subtotal o un importe: el total no puede ser cero.'; nota.hidden = false;
+    sub.focus();
   }, true);
 });
 /* estado del compromiso elegido con botones al cargarlo o editarlo */
@@ -948,9 +966,24 @@ montar('estado_sel', (box) => {
   const botones = estados.map((s) => { const b = e2('button', 'gs-chip-st', s); b.type = 'button'; b.setAttribute('role', 'radio'); b.onclick = () => { inp.value = s; sync(); }; return b; });
   const sync = () => botones.forEach((b) => { const on = b.textContent === (inp.value || def); b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
   grupo.append(...botones); box.appendChild(grupo);
-  form.addEventListener('reset', () => setTimeout(() => { inp.value = def; sync(); }));
-  form.addEventListener('gs-cargado', sync);
-  sync();
+  // si el estado es pagado o cobrado, se pide la fecha y el medio de pago
+  const ok = window.ERP_OK[tb.dataset.st] || [];
+  const pago = e2('div', 'gs-estado-pago'); pago.hidden = true;
+  const lf = e2('label'); const tf = e2('span', null, 'Fecha de pago'); const fp = e2('input'); fp.type = 'date'; fp.name = 'fecha_pago'; lf.append(tf, fp);
+  const lm = e2('label', null, 'Medio'); const mp = e2('select', 'dash-select'); mp.name = 'medio_pago';
+  ['', 'Transferencia', 'Cheque', 'E-Cheq', 'Efectivo', 'Débito automático', 'Tarjeta', 'Compensación'].forEach((x) => mp.add(new Option(x || '—', x))); lm.appendChild(mp);
+  const lo = e2('label', null, 'Nº de operación'); const op = e2('input'); op.name = 'operacion_pago'; op.maxLength = 40; lo.appendChild(op);
+  pago.append(lf, lm, lo); box.appendChild(pago);
+  const syncPago = () => {
+    const est = inp.value || def; const si = ok.includes(est);
+    pago.hidden = !si; fp.required = si; tf.textContent = est === 'Cobrada' ? 'Fecha de cobro' : 'Fecha de pago';
+    if (si && !fp.value) fp.value = window.SP_HOY();
+    if (!si) { fp.value = ''; mp.value = ''; op.value = ''; }
+  };
+  botones.forEach((b) => b.addEventListener('click', syncPago));
+  form.addEventListener('reset', () => setTimeout(() => { inp.value = def; sync(); syncPago(); }));
+  form.addEventListener('gs-cargado', () => { sync(); const si = ok.includes(inp.value); pago.hidden = !si; fp.required = si; });
+  sync(); syncPago();
 });
 const EVS = [['cumple', 'Cumpleaños'], ['cheques', 'Cheques (a emitir, a vencer, vencidos, rechazados)'], ['venc', 'Vencimientos administrativos'], ['cuentas', 'Cobros y pagos pendientes'], ['planes', 'Planes de pago ARCA/ARBA'], ['prestamos', 'Vencimiento de préstamos'], ['deuda', 'Uso de la calificación bancaria'], ['rentabilidad', 'Caídas de rentabilidad (EBITDA negativo)'], ['flota', 'VTV y seguros de flota'], ['mant', 'Mantenimientos de flota'], ['ordenes', 'Órdenes de trabajo'], ['compras', 'Pagos a proveedores']];
 const PERFS = ['Administración', 'Finanzas', 'Tesorería', 'Recursos Humanos', 'Operaciones', 'Comercial', 'Gerencia'];

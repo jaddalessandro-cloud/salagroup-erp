@@ -83,8 +83,11 @@ ERP.cambiarEstado = async (ds, fila, estado, extra) => {
     return;
   }
   const real = ds === 'cheques_todos' ? 'cheques_reg' : ds;
+  const paso = { estado, anterior: fila.estado || '', fecha: ahora, usuario: ERP.uid || '' };
+  ['fecha_pago', 'medio_pago', 'operacion_pago'].forEach((k) => { if (extra && extra[k]) paso[k] = extra[k]; });
+  datos.estados_hist = [...(Array.isArray(fila.estados_hist) ? fila.estados_hist : []), paso].slice(-40);
   await db.doc(`${PATH_DS[real]}/${fila.id}`).update(datos);
-  await ERP.log(db, real, fila.id, 'Cambio de estado', `${fila.estado || '—'} → ${estado}`);
+  await ERP.log(db, real, fila.id, 'Cambio de estado', `${fila.estado || '—'} → ${estado}${paso.fecha_pago ? ` · ${estado === 'Cobrada' ? 'cobrada' : 'pagada'} el ${fmtF(paso.fecha_pago)}` : ''}${paso.medio_pago ? ` · ${paso.medio_pago}` : ''}${paso.operacion_pago ? ` · op. ${paso.operacion_pago}` : ''}`);
 };
 
 /* ---------- botón de estado por colores ---------- */
@@ -115,24 +118,46 @@ ERP.boton = (fila, kind, ds, opts = {}) => {
     const pop = el('div', 'gs-pop');
     pop.onclick = (e) => e.stopPropagation();
     pop.appendChild(el('p', 'gs-pop-k', `Estado actual: ${fila.estado || '—'}`));
+    if (fila.fecha_pago && (window.ERP_OK[kind] || []).includes(fila.estado)) pop.appendChild(el('p', 'gs-pop-s', `${fila.estado === 'Cobrada' ? 'Cobrada' : 'Pagada'} el ${fmtF(fila.fecha_pago)}${fila.medio_pago ? ` · ${fila.medio_pago}` : ''}${fila.operacion_pago ? ` · op. ${fila.operacion_pago}` : ''}`));
+    if (Array.isArray(fila.estados_hist) && fila.estados_hist.length) {
+      const det = el('details', 'gs-pop-hist'); det.appendChild(el('summary', null, `Cambios de estado (${fila.estados_hist.length})`));
+      const ul = el('ul');
+      fila.estados_hist.slice(-8).reverse().forEach((h) => ul.appendChild(el('li', null, `${fmtFH(h.fecha)} · ${h.anterior || '—'} → ${h.estado}${h.fecha_pago ? ` (${fmtF(h.fecha_pago)})` : ''} · ${ERP.nombre(h.usuario)}`)));
+      det.appendChild(ul); pop.appendChild(det);
+      ERP.pedirNombres(fila.estados_hist.map((h) => h.usuario), []);
+    }
     pop.appendChild(el('p', 'gs-pop-s', 'Elegí el nuevo estado:'));
     if (fila.estado_fecha || fila.modificado) pop.appendChild(el('p', 'gs-pop-s', `Último cambio: ${fmtFH(fila.modificado || fila.estado_fecha)}${fila.modificado_por ? ' · ' + ERP.nombre(fila.modificado_por) : ''}`));
     if (typeof fila.comprobante === 'string' && /^(\/|https:\/\/)/.test(fila.comprobante)) { const a = el('a', null, 'Ver comprobante'); a.href = fila.comprobante; a.target = '_blank'; a.rel = 'noopener'; pop.appendChild(a); }
     const msg = el('p', 'gs-pop-err');
-    msg.hidden = true;
-    if (!ERP.puedeEditar()) { pop.appendChild(el('p', 'gs-pop-s', 'Tu perfil es de consulta: no puede cambiar estados.')); wrap.appendChild(pop); return; }
+    msg.style.display = "none";
+    if (!ERP.puedeEditar()) { pop.appendChild(el('p', 'gs-pop-s', 'Tu perfil es de consulta: no puede cambiar estados.')); wrap.appendChild(pop); ERP.ubicarPop(pop, b); return; }
     const lista = el('div', 'gs-pop-ops');
     ESTADOS[kind].filter((s) => s !== fila.estado).forEach((s) => {
       const o = el('button', 'gs-act', s); o.type = 'button';
       o.onclick = async () => {
         const esPago = (window.ERP_OK[kind] || []).includes(s);
+        const conPago = esPago && ['pago', 'factura', 'cuenta'].includes(kind);
         if (esPago && !o.dataset.ok) {
           o.dataset.ok = '1';
           o.textContent = `Confirmar: ${s}`;
           o.classList.add('gs-act-warn');
+          lista.querySelectorAll('button').forEach((x) => { if (x !== o) x.style.display = 'none'; });
+          const caja = el('div', 'gs-pop-pago');
+          if (conPago) {
+            const cobro = s === 'Cobrada';
+            const lf = el('label', null, cobro ? 'Fecha de cobro' : 'Fecha de pago'); const fp = el('input'); fp.type = 'date'; fp.name = 'fecha_pago'; fp.required = true; fp.value = hoy(); lf.appendChild(fp);
+            const lm = el('label', null, 'Medio'); const mp = el('select', 'dash-select'); mp.name = 'medio_pago';
+            ['Transferencia', 'Cheque', 'E-Cheq', 'Efectivo', 'Débito automático', 'Tarjeta', 'Compensación'].forEach((x) => mp.add(new Option(x, x))); lm.appendChild(mp);
+            const lo = el('label', null, 'Nº de operación (opcional)'); const op = el('input'); op.name = 'operacion_pago'; op.maxLength = 40; lo.appendChild(op);
+            caja.append(lf, lm, lo);
+          }
           const lab = el('label', 'gs-pop-file', 'Comprobante (opcional) ');
           const inp = el('input'); inp.type = 'file'; lab.appendChild(inp);
-          o.after(lab);
+          caja.appendChild(lab);
+          const cancelar = el('button', 'gs-act', 'Volver'); cancelar.type = 'button';
+          cancelar.onclick = () => { caja.remove(); cancelar.remove(); delete o.dataset.ok; o.textContent = s; o.classList.remove('gs-act-warn'); lista.querySelectorAll('button').forEach((x) => { x.style.display = ''; }); };
+          o.before(caja); o.after(cancelar);
           return;
         }
         o.disabled = true;
@@ -141,23 +166,43 @@ ERP.boton = (fila, kind, ds, opts = {}) => {
           const extra = {};
           if (esPago) {
             extra.fecha_confirmacion = new Date().toISOString();
+            const g = (n) => pop.querySelector(`[name="${n}"]`);
+            if (g('fecha_pago')) {
+              if (!g('fecha_pago').value) { msg.style.display = ""; msg.textContent = 'Indicá la fecha.'; o.disabled = false; return; }
+              extra.fecha_pago = g('fecha_pago').value; extra.medio_pago = g('medio_pago').value;
+              if (g('operacion_pago').value.trim()) extra.operacion_pago = g('operacion_pago').value.trim();
+            }
+          } else if (fila.fecha_pago && (window.ERP_OK[kind] || []).includes(fila.estado)) {
+            extra.fecha_pago = ''; extra.medio_pago = ''; extra.operacion_pago = '';
             const f = pop.querySelector('.gs-pop-file input');
             if (f && f.files && f.files[0]) { try { extra.comprobante = (await ERP.subirAdjunto(f.files[0])).url; } catch (ex) { aviso = `Estado actualizado, pero sin el comprobante: ${ex.message}`; } }
           }
           await ERP.cambiarEstado(ds, fila, s, extra);
-          if (aviso) { lista.remove(); msg.hidden = false; msg.textContent = aviso; setTimeout(() => pop.remove(), 6000); } else pop.remove();
+          if (aviso) { lista.remove(); msg.style.display = ""; msg.textContent = aviso; setTimeout(() => pop.remove(), 6000); } else pop.remove();
         } catch (ex) {
-          msg.hidden = false; msg.textContent = ERP.motivo(ex); o.disabled = false;
+          msg.style.display = ""; msg.textContent = ERP.motivo(ex); o.disabled = false;
         }
       };
       lista.appendChild(o);
     });
     pop.append(lista, msg);
-    wrap.appendChild(pop);
+    wrap.appendChild(pop); ERP.ubicarPop(pop, b);
   };
   return wrap;
 };
 document.addEventListener('click', () => document.querySelectorAll('.gs-pop').forEach((p) => p.remove()));
+/* la ventana de estado flota sobre la página (no la recorta la tabla) */
+ERP.ubicarPop = (pop, ancla) => {
+  const ub = () => {
+    if (!pop.isConnected) return;
+    const r = ancla.getBoundingClientRect(); const w = pop.offsetWidth, h = pop.offsetHeight;
+    let top = r.bottom + 4; if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+    pop.style.top = `${top}px`; pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 8))}px`;
+  };
+  pop.classList.add('gs-pop-flota'); pop.__ub = ub; ub();
+  new ResizeObserver(ub).observe(pop);
+};
+window.addEventListener('scroll', () => document.querySelectorAll('.gs-pop-flota').forEach((p) => { if (p.__ub) p.__ub(); }), true);
 
 /* ---------- tablas de registros ---------- */
 const sitDe = (r, kind, stfecha) => {

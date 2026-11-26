@@ -2,6 +2,14 @@
 const CARPETA = 'application/vnd.google-apps.folder';
 
 export const recorrerCarpeta = async (drive, raiz, { maxCarpetas = 3000, maxArchivos = 20000 } = {}) => {
+  // primero se confirma que la cuenta de servicio ve la carpeta raíz (si no está compartida, Drive devuelve listas vacías sin error)
+  try {
+    await drive.files.get({ fileId: raiz, fields: 'id, name', supportsAllDrives: true });
+  } catch (e) {
+    const err = new Error('La carpeta ESTACIONES no está compartida con la cuenta del servidor.');
+    err.code = (e && (e.code || (e.response && e.response.status))) === 404 ? 404 : 403;
+    throw err;
+  }
   const carpetas = [], archivos = [], cola = [raiz], vistas = new Set([raiz]);
   while (cola.length) {
     const padre = cola.shift();

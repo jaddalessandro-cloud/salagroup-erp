@@ -388,3 +388,19 @@ tbody[data-ds] td:first-child { cursor: pointer; color: var(--sp-acc); font-weig
 input.gs-imp-calc { background: transparent; border-color: transparent; font-weight: 700; }
 .gs-imp-nota { margin: 6px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-warn); }
 @container (max-width: 980px) { .gs-imp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.gs-imp-ayuda { margin: 0 0 8px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs-imp-tot { border-top: 0; padding-top: 0; margin-bottom: 8px; }
+.gs-imp-tot .gs-imp-det { grid-column: span 3; }
+.gs-imp-det input { text-align: left; font-weight: 400; }
+.gs-imp-mas { border-top: 1px solid var(--color-border-line); padding-top: 8px; }
+.gs-imp-mas summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--sg-sky-d); margin-bottom: 8px; }
+@container (max-width: 980px) { .gs-imp-tot .gs-imp-det { grid-column: 1 / -1; } }
+.gs-estado-sel { flex-wrap: wrap; }
+.gs-estado-pago { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px 12px; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--st-verde) 9%, var(--color-bg)); }
+.gs-estado-pago label, .gs-pop-pago label { display: flex; flex-direction: column; gap: 3px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs-estado-pago input, .gs-pop-pago input:not([type=file]) { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--color-border-line); border-radius: 8px; }
+.gs-pop-pago { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 6px; }
+.gs-pop-hist { font-size: 12px; margin: 4px 0; }
+.gs-pop-hist summary { cursor: pointer; color: var(--sg-sky-d); }
+.gs-pop-hist ul { margin: 4px 0; padding-left: 16px; color: var(--color-fg-muted); }
+.gs-pop.gs-pop-flota { position: fixed; z-index: 60; min-width: 260px; max-width: 340px; max-height: calc(100vh - 16px); overflow-y: auto; }

@@ -25,7 +25,7 @@ test('nombres de usuario', () => {
 test('Drive: recorre subcarpetas y no repite', async () => {
   const arbol = { R: [{ id: 'A', name: 'BANCOS', mimeType: 'application/vnd.google-apps.folder' }, { id: 'f1', name: 'x.pdf', mimeType: 'application/pdf', modifiedTime: '2026-01-01' }],
     A: [{ id: 'f2', name: 'y.xlsx', mimeType: 'application/vnd.ms-excel', modifiedTime: '2026-02-01', size: '10' }, { id: 'A', name: 'ciclo', mimeType: 'application/vnd.google-apps.folder' }] };
-  const drive = { files: { list: async ({ q }) => ({ data: { files: arbol[q.match(/'(\w+)'/)[1]] || [] } }) } };
+  const drive = { files: { get: async () => ({ data: { id: 'R' } }), list: async ({ q }) => ({ data: { files: arbol[q.match(/'(\w+)'/)[1]] || [] } }) } };
   const { carpetas, archivos } = await recorrerCarpeta(drive, 'R');
   assert.deepEqual(carpetas.map((c) => [c.id, c.carpeta_id]), [['A', 'R']]);
   assert.deepEqual(archivos.map((a) => a.id), ['f2', 'f1']);
@@ -36,4 +36,8 @@ test('partición de filas grandes', () => {
   const partes = partirFilas(filas);
   assert.ok(partes.length > 1);
   assert.equal(partes.flat().length, 5000);
+});
+test('Drive: avisa si la carpeta no está compartida', async () => {
+  const drive = { files: { get: async () => { const e = new Error('nf'); e.code = 404; throw e; }, list: async () => ({ data: { files: [] } }) } };
+  await assert.rejects(recorrerCarpeta(drive, 'R'), (e) => e.code === 404 && /no está compartida/.test(e.message));
 });
