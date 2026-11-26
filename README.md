@@ -4,7 +4,7 @@ ERP de Sala Group (Shell · DSB Asociados, YPF · Combustibles Magdalena, Alveme
 con ingreso por usuario y contraseña, permisos controlados en el servidor, base de datos persistente, respaldos diarios
 y sincronización de solo lectura con la carpeta **ESTACIONES** de Google Drive.
 
-Dirección prevista: `https://salagroup-erp.web.app` (HTTPS, la da Firebase Hosting).
+Dirección: `https://erp-sala-group.web.app` (HTTPS, la da Firebase Hosting).
 
 ## Cómo está armado
 
@@ -40,16 +40,14 @@ Hernán, Javier y Christian se crean como **Administrador**.
 
 ## Puesta en marcha (una sola vez)
 
-1. **Proyecto de Firebase** — en <https://console.firebase.google.com> crear el proyecto `salagroup-erp`
-   (si el nombre está tomado, usar otro y cargarlo como variable `FIREBASE_PROJECT` en GitHub → Settings → Secrets and variables → Actions → Variables).
+1. **Proyecto de Firebase** — en <https://console.firebase.google.com> proyecto `erp-sala-group`
+   (para usar otro, cargarlo como variable `FIREBASE_PROJECT` en GitHub → Settings → Secrets and variables → Actions → Variables).
    - Plan **Blaze** (pago por uso; para este volumen el costo esperado es de centavos o nulo, pero lo exigen las funciones y los respaldos).
    - Authentication → Método de acceso → habilitar **Correo electrónico/contraseña**.
    - Firestore Database → crear en modo producción, ubicación **southamerica-east1 (São Paulo)**.
    - Storage → crear, misma ubicación.
-2. **Cuenta de servicio para publicar** — en Google Cloud Console → IAM → Cuentas de servicio, crear `github-publicar` con los roles
-   *Editor*, *Administrador de Firebase*, *Administrador de Cloud Functions*, *Usuario de cuenta de servicio* y *Administrador de IAM del proyecto*.
-   Generar una clave JSON y guardarla **completa** como secreto de GitHub `FIREBASE_SERVICE_ACCOUNT`
-   (Settings → Secrets and variables → Actions → New repository secret). No la envíes por chat ni por correo.
+2. **Publicación sin claves** — GitHub Actions entra a Google con Workload Identity Federation (pool `github-pool`)
+   como la cuenta `github-deploy@erp-sala-group.iam.gserviceaccount.com`; no hay claves JSON guardadas.
 3. **Contraseña provisoria** — crear el secreto `CLAVE_INICIAL` con una contraseña provisoria (10+ caracteres, letras y números).
    Es la que van a usar Hernán, Javier y Christian la primera vez; el sistema los obliga a cambiarla.
 4. **Preparar** — GitHub → Actions → *Preparar proyecto (una sola vez)* → *Run workflow*. Habilita las APIs, crea el depósito de

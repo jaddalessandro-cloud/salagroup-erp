@@ -55,3 +55,12 @@ jobs:
 
       - name: Publicar en Firebase
         run: npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --only firestore,functions,hosting --non-interactive --force
+
+      # Reglas de los adjuntos: se publican cuando Storage está activado en el proyecto.
+      - name: Publicar reglas de adjuntos (Storage)
+        run: |
+          if npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --only storage --non-interactive --force; then
+            echo "Reglas de Storage publicadas."
+          else
+            echo "::warning::Storage no está activado en el proyecto: los adjuntos no funcionan hasta activarlo en la consola de Firebase (Storage → Comenzar)."
+          fi
