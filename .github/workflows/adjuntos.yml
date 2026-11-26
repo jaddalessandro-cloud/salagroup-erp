@@ -21,20 +21,29 @@ jobs:
           workload_identity_provider: projects/41294063283/locations/global/workloadIdentityPools/github-pool/providers/github-provider
           service_account: github-deploy@erp-sala-group.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Crear depósito de Storage
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Estado de Storage
+        id: estado
         run: |
-          gcloud services enable firebasestorage.googleapis.com storage.googleapis.com --project "$PROYECTO" || echo "(no se pudieron habilitar servicios: se sigue igual)"
+          TOKEN=$(gcloud auth print-access-token)
+          curl -s -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: $PROYECTO" "https://firebasestorage.googleapis.com/v1beta/projects/$PROYECTO/buckets" | tee b.json
+          echo
+          if npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --only storage --non-interactive --force; then
+            echo "listo=1" >> "$GITHUB_OUTPUT"; echo "Storage activo: reglas publicadas."
+          else echo "listo=0" >> "$GITHUB_OUTPUT"; fi
+      - name: Crear depósito de Storage
+        if: steps.estado.outputs.listo != '1'
+        run: |
           TOKEN=$(gcloud auth print-access-token)
           CODE=$(curl -s -o r.json -w '%{http_code}' -X POST \
             -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "x-goog-user-project: $PROYECTO" \
             "https://firebasestorage.googleapis.com/v1beta/projects/$PROYECTO/defaultBucket" \
             -d '{"location":"southamerica-east1"}')
           cat r.json; echo
-          if [ "$CODE" = "200" ]; then echo "Depósito creado."; 
-          elif [ "$CODE" = "409" ]; then echo "El depósito ya existía.";
-          else echo "::error::No se pudo crear el depósito (HTTP $CODE)."; exit 1; fi
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Publicar reglas de Storage
-        run: npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --only storage --non-interactive --force
+          if [ "$CODE" = "200" ] || [ "$CODE" = "409" ]; then
+            npx --yes firebase-tools@15.37.0 deploy --project "$PROYECTO" --only storage --non-interactive --force
+          else
+            echo "::error::Storage no está activado y esta cuenta no puede crearlo. Activalo en la consola de Firebase: Storage → Comenzar."; exit 1
+          fi
