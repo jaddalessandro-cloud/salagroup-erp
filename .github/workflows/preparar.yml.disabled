@@ -16,7 +16,7 @@ jobs:
   preparar:
     runs-on: ubuntu-latest
     env:
-      PROYECTO: ${{ vars.FIREBASE_PROJECT || 'salagroup-erp' }}
+      PROYECTO: ${{ vars.FIREBASE_PROJECT || 'erp-sala-group' }}
       REGION: southamerica-east1
     steps:
       - uses: actions/checkout@v4

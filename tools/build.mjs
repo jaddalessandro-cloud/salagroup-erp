@@ -32,15 +32,32 @@ let erp = leer(src('erp', 'index.html'))
 
 const reemplazar = (texto, desde, hasta, nuevo, nombre) => {
   const i = texto.indexOf(desde);
-  const j = hasta ? texto.indexOf(hasta, i) : i + desde.length;
-  if (i < 0 || j < 0) throw new Error(`build: no se encontró ${nombre}`);
+
+  if (i < 0) {
+    throw new Error(`build: no se encontró ${nombre}`);
+  }
+
+  const inicio = i + desde.length;
+
+  let j;
+
+  if (hasta instanceof RegExp) {
+    const relativo = texto.slice(inicio).search(hasta);
+    j = relativo < 0 ? -1 : inicio + relativo;
+  } else {
+    j = hasta ? texto.indexOf(hasta, inicio) : inicio;
+  }
+
+  if (j < 0) {
+    throw new Error(`build: no se encontró el final de ${nombre}`);
+  }
+
   return texto.slice(0, i) + nuevo + texto.slice(j);
 };
 // cuenta (cambiar contraseña, cerrar sesión) al pie del menú lateral
 erp = reemplazar(erp, '<p class="gs-side-foot">', null, `${leer(src('shell', 'cuenta.html'))}<p class="gs-side-foot">`, 'pie del menú');
 // los perfiles del tablero original pasan a ser usuarios y permisos reales del servidor
-erp = reemplazar(erp, '<h2>Perfiles de usuario</h2>', '</div>\n<div id="adm-hist"', `${leer(src('shell', 'paneles.html'))}`, 'perfiles de usuario');
-
+erp = reemplazar(erp, '<h2>Perfiles de usuario</h2>', /<\/div>\r?\n<div id="adm-hist"/, `${leer(src('shell', 'paneles.html'))}`, 'perfiles de usuario');
 const html = `<!doctype html>
 <html lang="es-AR">
 <head>
