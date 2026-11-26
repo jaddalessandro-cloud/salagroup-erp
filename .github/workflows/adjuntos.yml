@@ -23,7 +23,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: Crear depósito de Storage
         run: |
-          gcloud services enable firebasestorage.googleapis.com storage.googleapis.com --project "$PROYECTO"
+          gcloud services enable firebasestorage.googleapis.com storage.googleapis.com --project "$PROYECTO" || echo "(no se pudieron habilitar servicios: se sigue igual)"
           TOKEN=$(gcloud auth print-access-token)
           CODE=$(curl -s -o r.json -w '%{http_code}' -X POST \
             -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "x-goog-user-project: $PROYECTO" \
