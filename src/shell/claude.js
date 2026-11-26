@@ -2,7 +2,7 @@
  * Adaptador `claude.use(...)`: base de datos, identidad, descargas y adjuntos,
  * con la misma forma que usaba el tablero original, ahora sobre Firebase.
  */
-import { ref, uploadBytes, getBlob } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const PERFIL_ERP = { admin: 'Administrador', gerencia: 'Gerencia', consulta: 'Consulta' };
 const limpio = (s) => String(s || 'archivo').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '_').slice(-120);
@@ -44,6 +44,10 @@ export function instalarClaude(ctx, datos, user, role) {
       }
       return { id: ruta, url: `/adjunto/${encodeURIComponent(ruta)}` };
     },
+    remove: async (url) => {
+      if (typeof url !== 'string' || !url.startsWith('/adjunto/')) return;
+      try { await deleteObject(ref(ctx.st, decodeURIComponent(url.slice('/adjunto/'.length)))); } catch (e) { if (e && e.code !== 'storage/object-not-found') throw e; }
+    },
   };
   window.claude = {
     use: async (n) => (n === 'db' ? datos.db : n === 'user' ? usuario : n === 'downloads' ? descargas : n === 'assets' ? adjuntos : null),
@@ -57,13 +61,12 @@ export function instalarClaude(ctx, datos, user, role) {
     const ventana = window.open('', '_blank');
     try {
       const ruta = decodeURIComponent(a.getAttribute('href').slice('/adjunto/'.length));
-      const blob = await getBlob(ref(ctx.st, ruta));
-      const url = URL.createObjectURL(blob);
+      // el enlace lo entrega Storage solo a una persona con sesión y permiso de lectura
+      const url = await getDownloadURL(ref(ctx.st, ruta));
       if (ventana) ventana.location.href = url; else location.assign(url);
-      setTimeout(() => URL.revokeObjectURL(url), 120000);
-    } catch {
+    } catch (e) {
       if (ventana) ventana.close();
-      alert('No se pudo abrir el adjunto.');
+      alert(e && e.code === 'storage/object-not-found' ? 'El adjunto ya no existe.' : 'No se pudo abrir el adjunto.');
     }
   });
 }

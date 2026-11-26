@@ -46,6 +46,14 @@ ERP.pedirNombres = (ids, draw) => {
   }).catch(() => {});
 };
 ERP.puedeEditar = () => ERP.perfil !== 'Consulta';
+ERP.quitarAdjunto = async (path, ds, fila, i) => {
+  const db = await ERP.db();
+  const lista = Array.isArray(fila.adjuntos) ? fila.adjuntos.slice() : [];
+  const [x] = lista.splice(i, 1);
+  await db.doc(`${path}/${fila.id}`).update({ adjuntos: lista, modificado: new Date().toISOString(), modificado_por: ERP.uid || '' });
+  await ERP.log(db, ds, fila.id, 'Adjunto eliminado', (x && x.nombre) || '');
+  try { const as = await claude.use('assets'); if (as && as.remove && x) await as.remove(x.url); } catch { /* el registro ya no lo muestra; el archivo queda en el depósito */ }
+};
 ERP.motivo = (ex) => {
   const c = String((ex && ex.code) || '');
   if (/permission-denied/.test(c)) return 'No se guardó: tu perfil no tiene permiso para cargar o modificar este registro. Si te cambiaron el perfil, cerrá sesión y volvé a ingresar.';
@@ -257,7 +265,22 @@ ERP.tabla = (tb, rows, o) => {
       else if (f === 'l') { if (typeof v === 'string' && /^https?:\/\//.test(v)) { const a = el('a', null, 'Abrir'); a.href = v; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); } }
       else if (f === 'adj') {
         const adj = Array.isArray(v) ? v : [];
-        adj.forEach((x, i) => { if (x && typeof x.url === 'string' && (/^(\/_blob\/|\/adjunto\/|https:\/\/)/.test(x.url))) { const a = el('a', 'gs-adj', x.nombre || `Doc ${i + 1}`); a.href = x.url; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); } });
+        adj.forEach((x, i) => {
+          if (!(x && typeof x.url === 'string' && /^(\/_blob\/|\/adjunto\/|https:\/\/)/.test(x.url))) return;
+          const a = el('a', 'gs-adj', x.nombre || `Doc ${i + 1}`); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
+          const w = el('span', 'gs-adj-w'); w.appendChild(a);
+          if (ERP.puedeEditar() && o.path) {
+            const q = el('button', 'gs-adj-x', '×'); q.type = 'button'; q.title = `Quitar ${x.nombre || 'adjunto'}`; q.setAttribute('aria-label', q.title);
+            q.onclick = async (ev) => {
+              ev.stopPropagation();
+              if (!q.dataset.ok) { q.dataset.ok = '1'; q.textContent = '¿Quitar?'; q.classList.add('gs-adj-x-ok'); setTimeout(() => { if (q.isConnected) { delete q.dataset.ok; q.textContent = '×'; q.classList.remove('gs-adj-x-ok'); } }, 5000); return; }
+              q.disabled = true;
+              try { await ERP.quitarAdjunto(o.path, o.formDs || o.ds, r, i); } catch (e) { q.textContent = 'No se pudo'; q.title = ERP.motivo(e); }
+            };
+            w.appendChild(q);
+          }
+          td.appendChild(w);
+        });
         if (typeof r.link === 'string' && /^https?:\/\//.test(r.link)) { const a = el('a', 'gs-adj', 'Drive'); a.href = r.link; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); }
         if (typeof r.comprobante === 'string' && /^(\/|https:\/\/)/.test(r.comprobante)) { const a = el('a', 'gs-adj', 'Comprobante'); a.href = r.comprobante; a.target = '_blank'; a.rel = 'noopener'; td.appendChild(a); }
       } else if (f === 'u') td.textContent = ERP.nombre(v);
