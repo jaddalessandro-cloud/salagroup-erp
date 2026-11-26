@@ -463,6 +463,35 @@
 </div>
 </div>
 <div id="fin-planes" data-subpanel="fin-planes" hidden>
+<h2>Calendario de planes de pago</h2>
+<div class="sp-card sp-gap" id="plcal-card">
+<div class="gs-calnav">
+<button type="button" class="gs-act" id="plcal-prev">‹ Mes anterior</button>
+<button type="button" class="gs-act" id="plcal-hoy">Hoy</button>
+<button type="button" class="gs-act" id="plcal-next">Mes siguiente ›</button>
+<h3 class="gs-cal-tit" data-draw="plcal_titulo">—</h3>
+</div>
+<div class="gs-leyenda"><span class="gs-st azul">PROGRAMADA</span><span class="gs-st amarillo">POR VENCER (7 DÍAS)</span><span class="gs-st rojo">VENCIDA</span><span class="gs-st naranja">PAGO PARCIAL</span><span class="gs-st verde">PAGADA</span></div>
+<div class="gs-cal-head"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+<div class="gs-cal" data-draw="plcal" data-source="planes_cuotas"></div>
+<p class="sp-note">Incluye las cuotas de la planilla de planes ARCA y ARBA (débito mensual desde el próximo débito informado; los planes caducos no se muestran) y las de los planes propios. Tocá una cuota o un día para registrar el pago: se pregunta si se pagó con intereses y se suman al valor de la cuota.</p>
+</div>
+<div class="sp-grid2">
+<div class="sp-card" id="plcal-dia-card">
+<h3>Cuotas del <span data-draw="plcal_dia_tit">—</span></h3>
+<ul class="gs-dia-lista" data-draw="plcal_dia" data-source="planes_cuotas"></ul>
+</div>
+<div class="sp-card">
+<h3>Resumen del mes</h3>
+<div class="gs-tiles-s">
+<div class="sp-card sp-tile gs-tile-s"><p class="k">Cuotas del mes</p><p class="v" data-draw="plcal_k" data-k="total" data-source="planes_cuotas">—</p><p class="s"><span data-draw="plcal_k" data-k="n" data-source="planes_cuotas">—</span> cuotas</p></div>
+<div class="sp-card sp-tile gs-tile-s"><p class="k">Pagado</p><p class="v" data-draw="plcal_k" data-k="pagado" data-source="planes_cuotas">—</p></div>
+<div class="sp-card sp-tile gs-tile-s"><p class="k">Intereses pagados</p><p class="v" data-draw="plcal_k" data-k="intereses" data-source="planes_cuotas">—</p></div>
+<div class="sp-card sp-tile gs-tile-s"><p class="k">Pendiente</p><p class="v" data-draw="plcal_k" data-k="pendiente" data-source="planes_cuotas">—</p></div>
+<div class="sp-card sp-tile gs-tile-s"><p class="k">Vencido sin pagar</p><p class="v" data-draw="plcal_k" data-k="vencido" data-source="planes_cuotas">—</p></div>
+</div>
+</div>
+</div>
 <h2>Planes de pago propios</h2>
 <div class="sp-card sp-tw" id="tabla-planes-fin"><h3>Comparación de planes</h3><table class="sp-table gs-left" data-source="planes_fin_res" data-row-key="id"><thead><tr><th data-field="nombre">Plan</th><th data-field="tipo">Tipo</th><th data-field="acreedor">Acreedor</th><th data-field="estacion">Estación</th><th class="gs-num" data-field="total">Total</th><th class="gs-num" data-field="pagado">Pagado</th><th class="gs-num" data-field="saldo">Saldo</th><th class="gs-num">Cuotas</th><th data-field="proximo">Próximo vto.</th><th class="gs-num" data-field="interes_sobre_capital">Interés / capital</th><th>Situación</th></tr></thead><tbody data-draw="tb_planes_fin"></tbody></table></div>
 <div class="sp-gap" id="plan-ficha" data-draw="plan_ficha" data-source="planes_fin"></div>

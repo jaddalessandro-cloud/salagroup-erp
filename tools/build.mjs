@@ -83,7 +83,7 @@ ${leer(src('shell', 'acceso.html'))}
 writeFileSync(pub('index.html'), html);
 
 /* ---------- archivos ---------- */
-for (const f of ['calc.js', 'app.js', 'erp.js', 'erp2.js', 'app.css', 'lato.css']) copyFileSync(src('erp', f), pub('erp', f));
+for (const f of ['calc.js', 'app.js', 'erp.js', 'erp2.js', 'erp3.js', 'app.css', 'lato.css']) copyFileSync(src('erp', f), pub('erp', f));
 copyFileSync(src('shell', 'shell.css'), pub('shell.css'));
 copyFileSync(join(raiz, 'node_modules', 'd3', 'dist', 'd3.min.js'), pub('vendor', 'd3.min.js'));
 

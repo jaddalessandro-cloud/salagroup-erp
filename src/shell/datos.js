@@ -14,7 +14,7 @@ export const COLECCIONES = {
   caja: 'caja', cuentas_banco: 'cuentas_banco', extractos: 'extractos', extracto_mov: 'extracto_mov', conciliacion: 'conciliacion',
   planes_fin: 'planes_fin', clientes: 'clientes', proveedores: 'proveedores', facturas: 'facturas', contratos: 'contratos',
   societaria: 'societaria', seguros: 'seguros', tramites: 'tramites', ventas_fisicas: 'ventas_fisicas', precios: 'precios',
-  tienda: 'tienda', proyectos: 'proyectos', pagos_prov: 'pagos_prov',
+  tienda: 'tienda', proyectos: 'proyectos', pagos_prov: 'pagos_prov', plan_cuotas: 'plan_cuotas',
 };
 
 const PERFIL_ERP = { admin: 'Administrador', gerencia: 'Gerencia', consulta: 'Consulta' };

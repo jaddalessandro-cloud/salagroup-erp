@@ -192,7 +192,7 @@ async function iniciarERP(ctx, user, role) {
   instalarClaude(ctx, datos, user, role);
   document.body.dataset.rol = role;
   await cargarScript('/vendor/d3.min.js');
-  for (const f of ['calc.js', 'app.js', 'erp.js', 'erp2.js']) await cargarScript(`/erp/${f}?v=__VERSION__`);
+  for (const f of ['calc.js', 'app.js', 'erp.js', 'erp2.js', 'erp3.js']) await cargarScript(`/erp/${f}?v=__VERSION__`);
   montarPaneles(ctx, datos, user, role, { abrirCambioClave: () => abrirCambioClave(ctx, false) });
   ver('#erp', true);
   mostrarPantalla(null);

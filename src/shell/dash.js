@@ -76,8 +76,11 @@ export function instalarDash(datos) {
   datos.alCambiar(correr);
   // al mostrarse una sección oculta, se dibuja
   let t;
-  new MutationObserver(() => { clearTimeout(t); t = setTimeout(correr, 0); })
-    .observe(document.documentElement, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+  // solo cuando algo realmente se muestra u oculta (no cuando se reescribe el mismo valor)
+  new MutationObserver((ms) => {
+    if (!ms.some((m) => (m.oldValue !== null) !== m.target.hasAttribute('hidden'))) return;
+    clearTimeout(t); t = setTimeout(correr, 0);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['hidden'], attributeOldValue: true, subtree: true });
   let r; let ancho = window.innerWidth;
   window.addEventListener('resize', () => { if (window.innerWidth === ancho) return; ancho = window.innerWidth; clearTimeout(r); r = setTimeout(correr, 150); });
   return dash;

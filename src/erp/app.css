@@ -408,3 +408,20 @@ input.gs-imp-calc { background: transparent; border-color: transparent; font-wei
 .gs-adj-x { font: inherit; font-size: 13px; line-height: 1; border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; padding: 2px 5px; border-radius: 6px; }
 .gs-adj-x:hover { background: color-mix(in srgb, var(--color-bad) 12%, transparent); color: var(--color-bad); }
 .gs-adj-x.gs-adj-x-ok { font-size: 11px; color: #fff; background: var(--color-bad); }
+/* calendario de planes de pago */
+button.gs-cal-ev { border: 0; font: inherit; font-size: 10.5px; text-align: left; cursor: pointer; width: 100%; }
+button.gs-cal-ev:hover { filter: brightness(1.1); }
+.gs-cal-ev.azul { background: var(--st-azul); } .gs-cal-ev.naranja { background: var(--st-naranja); }
+.gs-plc-item { flex-wrap: wrap; }
+.gs-plc-pago { color: var(--st-verde); font-weight: 700; }
+.gs-plc-form { flex-basis: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--color-border-line); border-radius: 10px; background: var(--color-panel); display: flex; flex-direction: column; gap: 8px; }
+.gs-plc-tit { margin: 0; font-weight: 700; font-size: 13px; }
+.gs-plc-si { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gs-plc-preg { font-size: 13px; font-weight: 700; margin-right: 4px; }
+.gs-plc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px 12px; }
+.gs-plc-grid label { display: flex; flex-direction: column; gap: 3px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs-plc-grid input { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: 8px; background: var(--color-bg); }
+.gs-plc-total { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.gs-plc-parcial { color: var(--color-warn); }
+.gs-plc-acc { display: flex; gap: 8px; align-items: center; }
+.gs-dot.naranja { background: var(--st-naranja); }
