@@ -160,13 +160,13 @@
 <tr><td>Energía eléctrica</td><td data-draw="rk" data-source="pl_rangos" data-field="energia" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_energia" data-fmt="p">—</td></tr>
 <tr><td>Servicios y abonos (agua, seguridad, software)</td><td data-draw="rk" data-source="pl_rangos" data-field="servicios" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_servicios" data-fmt="p">—</td></tr>
 <tr><td>Ingresos Brutos</td><td data-draw="rk" data-source="pl_rangos" data-field="iibb" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_iibb" data-fmt="p">—</td></tr>
-<tr><td>Gastos bancarios</td><td data-draw="rk" data-source="pl_rangos" data-field="bancarios" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_bancarios" data-fmt="p">—</td></tr>
 <tr><td>Honorarios</td><td data-draw="rk" data-source="pl_rangos" data-field="honorarios" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_honorarios" data-fmt="p">—</td></tr>
 <tr><td>Comisiones Shell, limpieza y mantenimiento</td><td data-draw="rk" data-source="pl_rangos" data-field="gastos_fijos_cierre" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_gastos_fijos_cierre" data-fmt="p">—</td></tr>
 <tr><td>Otros gastos (sólo 2025, según balance)</td><td data-draw="rk" data-source="pl_rangos" data-field="otros_gastos" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_otros_gastos" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>EBITDA</td><td data-draw="rk" data-source="pl_rangos" data-field="ebitda" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_ebitda" data-fmt="p">—</td></tr>
 <tr><td>Amortizaciones</td><td data-draw="rk" data-source="pl_rangos" data-field="amortizaciones" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_amortizaciones" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>Resultado operativo (EBIT)</td><td data-draw="rk" data-source="pl_rangos" data-field="ebit" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_ebit" data-fmt="p">—</td></tr>
+<tr class="gs-fila-banc"><td>Gastos bancarios (comisiones y gastos de cuentas)</td><td data-draw="rk" data-source="pl_rangos" data-field="bancarios" data-fmt="m" data-neg="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_bancarios" data-fmt="p">—</td></tr>
 <tr><td>Resultado financiero (intereses estimados)</td><td data-draw="rk" data-source="pl_rangos" data-field="resultado_financiero" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_resultado_financiero" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>Resultado antes de Ganancias</td><td data-draw="rk" data-source="pl_rangos" data-field="rai" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_rai" data-fmt="p">—</td></tr>
 <tr><td>Impuesto a las Ganancias</td><td data-draw="rk" data-source="pl_rangos" data-field="ganancias" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_ganancias" data-fmt="p">—</td></tr>
@@ -178,7 +178,7 @@
 <h2>P&amp;L mes a mes</h2>
 <div class="sp-card sp-tw" id="pyl-mensual">
 <table class="sp-table" data-source="pl_mensual" data-row-key="mes">
-<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="margen_bruto_pct">MB %</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="base">Base</th></tr></thead>
+<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="margen_bruto_pct">MB %</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="bancarios" class="gs-col-banc">Gastos banc.</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="base">Base</th></tr></thead>
 <tbody data-draw="tb_mensual"></tbody>
 </table>
 </div>
@@ -205,12 +205,12 @@
 <tr><td>Alquiler</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="alquiler" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_alquiler" data-fmt="p">—</td></tr>
 <tr><td>Seguros</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="seguros" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_seguros" data-fmt="p">—</td></tr>
 <tr><td>Ingresos Brutos</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="iibb" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_iibb" data-fmt="p">—</td></tr>
-<tr><td>Gastos bancarios</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="bancarios" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_bancarios" data-fmt="p">—</td></tr>
 <tr><td>Otros gastos</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="otros_gastos" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_otros_gastos" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>Gastos operativos</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="gastos_operativos" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_gastos_operativos" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>EBITDA</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="ebitda" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_ebitda" data-fmt="p">—</td></tr>
 <tr><td>Amortizaciones</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="amortizaciones" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_amortizaciones" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>Resultado operativo (EBIT)</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="ebit" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_ebit" data-fmt="p">—</td></tr>
+<tr class="gs-fila-banc"><td>Gastos bancarios (comisiones y gastos de cuentas)</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="bancarios" data-fmt="m" data-neg="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_bancarios" data-fmt="p">—</td></tr>
 <tr><td>Resultado financiero (intereses est.)</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="resultado_financiero" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_resultado_financiero" data-fmt="p">—</td></tr>
 <tr class="sp-tot"><td>Resultado antes de Ganancias</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="rai" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_rai" data-fmt="p">—</td></tr>
 <tr><td>Impuesto a las Ganancias</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="ganancias" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_ganancias" data-fmt="p">—</td></tr>
@@ -222,7 +222,7 @@
 <h2>P&amp;L mes a mes</h2>
 <div class="sp-card sp-tw" id="pyl-mensual-emp">
 <table class="sp-table" data-source="pl_empresas" data-row-key="empresa,mes">
-<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="servicio_deuda">Cuotas (caja)</th></tr></thead>
+<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="bancarios" class="gs-col-banc">Gastos banc.</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="servicio_deuda">Cuotas (caja)</th></tr></thead>
 <tbody data-draw="tb_empresa"></tbody>
 </table>
 </div>
@@ -1546,7 +1546,7 @@
 <h2>Mes a mes</h2>
 <div class="sp-card sp-tw" id="tabla-empresa-mensual">
 <table class="sp-table" data-source="pl_empresas" data-row-key="empresa,mes">
-<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="servicio_deuda">Cuotas (caja)</th></tr></thead>
+<thead><tr><th>Mes</th><th data-field="ventas_netas">Ventas netas</th><th data-field="margen_bruto">Margen bruto</th><th data-field="gastos_operativos">Gastos op.</th><th data-field="ebitda">EBITDA</th><th data-field="ebitda_pct">EBITDA %</th><th data-field="bancarios" class="gs-col-banc">Gastos banc.</th><th data-field="resultado_financiero">Res. financiero</th><th data-field="resultado_neto">Resultado neto</th><th data-field="servicio_deuda">Cuotas (caja)</th></tr></thead>
 <tbody data-draw="tb_empresa"></tbody>
 </table>
 </div>

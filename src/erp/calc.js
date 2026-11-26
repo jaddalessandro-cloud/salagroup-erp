@@ -83,10 +83,10 @@ dash.calc('pl_mensual', {
       r.servicio_deuda = (k.prestamos || 0) + (k.planes_fiscales || 0);
     }
     r.cmv = r.ventas_netas - r.margen_bruto;
-    r.gastos_operativos = r.sueldos + r.cargas_sociales + r.energia + (r.servicios || 0) + r.iibb + r.bancarios + r.honorarios + (r.gastos_fijos_cierre || 0) + r.otros_gastos;
+    r.gastos_operativos = r.sueldos + r.cargas_sociales + r.energia + (r.servicios || 0) + r.iibb + r.honorarios + (r.gastos_fijos_cierre || 0) + r.otros_gastos; // los gastos bancarios van aparte, después del EBIT
     r.ebitda = r.margen_bruto - r.gastos_operativos;
     r.ebit = r.ebitda - r.amortizaciones;
-    r.rai = r.ebit + r.resultado_financiero;
+    r.rai = r.ebit - r.bancarios + r.resultado_financiero;
     r.ganancias = y === 2025 ? -r.ganancias_fijo : -Math.max(r.rai, 0) * S.tasa_ganancias;
     delete r.ganancias_fijo;
     r.resultado_neto = r.rai + r.ganancias;
@@ -193,11 +193,11 @@ dash.calc('pl_empresas', {
   const comunes = ['cargas_sociales', 'seguros', 'prestamos', 'planes_fiscales'];
   const rows = [];
   const fin = (r) => {
-    r.gastos_operativos = r.sueldos + r.cargas_sociales + r.energia + r.servicios + r.alquiler + r.seguros + r.iibb + r.bancarios + r.otros_gastos;
+    r.gastos_operativos = r.sueldos + r.cargas_sociales + r.energia + r.servicios + r.alquiler + r.seguros + r.iibb + r.otros_gastos; // gastos bancarios aparte
     r.cmv = r.ventas_netas - r.margen_bruto;
     r.ebitda = r.margen_bruto - r.gastos_operativos;
     r.ebit = r.ebitda - r.amortizaciones;
-    r.rai = r.ebit + r.resultado_financiero;
+    r.rai = r.ebit - r.bancarios + r.resultado_financiero;
     if (r.ganancias == null) r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias;
     r.resultado_neto = r.rai + r.ganancias;
     r.margen_bruto_pct = r.margen_bruto / r.ventas_netas; r.ebitda_pct = r.ebitda / r.ventas_netas; r.neto_pct = r.resultado_neto / r.ventas_netas;
@@ -226,7 +226,7 @@ dash.calc('pl_empresas', {
     }
   });
   // la deuda e intereses de YPF van completos a YPF
-  rows.filter((r) => r.empresa === 'ypf').forEach((r) => { r.resultado_financiero = -dY * S.tna_deuda / 12; r.rai = r.ebit + r.resultado_financiero; r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias; r.resultado_neto = r.rai + r.ganancias; r.neto_pct = r.resultado_neto / r.ventas_netas; });
+  rows.filter((r) => r.empresa === 'ypf').forEach((r) => { r.resultado_financiero = -dY * S.tna_deuda / 12; r.rai = r.ebit - r.bancarios + r.resultado_financiero; r.ganancias = -Math.max(r.rai, 0) * S.tasa_ganancias; r.resultado_neto = r.rai + r.ganancias; r.neto_pct = r.resultado_neto / r.ventas_netas; });
   const campos = ['ventas_netas', 'cmv', 'margen_bruto', 'sueldos', 'cargas_sociales', 'energia', 'servicios', 'alquiler', 'seguros', 'iibb', 'bancarios', 'otros_gastos', 'gastos_operativos', 'ebitda', 'amortizaciones', 'ebit', 'resultado_financiero', 'rai', 'ganancias', 'resultado_neto', 'servicio_deuda'];
   const agregar = (nombre, emps) => {
     const meses = [...new Set(rows.filter((r) => emps.includes(r.empresa)).map((r) => r.mes))].sort();
@@ -267,7 +267,7 @@ dash.calc('pl_empresas_rangos', {
         o.personal = o.sueldos + o.cargas_sociales;
         o.pct_personal = o.ventas_netas ? o.personal / o.ventas_netas : null;
         o.estructura = o.energia + o.servicios + o.alquiler + o.seguros;
-        o.comerciales = o.iibb + o.bancarios;
+        o.comerciales = o.iibb;
         out.push(o);
       }
     }

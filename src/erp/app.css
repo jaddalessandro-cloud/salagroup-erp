@@ -425,3 +425,7 @@ button.gs-cal-ev:hover { filter: brightness(1.1); }
 .gs-plc-parcial { color: var(--color-warn); }
 .gs-plc-acc { display: flex; gap: 8px; align-items: center; }
 .gs-dot.naranja { background: var(--st-naranja); }
+/* gastos bancarios: renglón aparte en celeste */
+.sp-table tr.gs-fila-banc td { background: color-mix(in srgb, var(--sg-sky) 16%, var(--color-bg)); color: var(--sg-sky-d); font-weight: 700; }
+.sp-table tr.gs-fila-banc td:first-child { box-shadow: inset 4px 0 0 var(--sg-sky); }
+.sp-table th.gs-col-banc, .sp-table td.gs-col-banc { background: color-mix(in srgb, var(--sg-sky) 16%, var(--color-bg)); color: var(--sg-sky-d); font-weight: 700; }

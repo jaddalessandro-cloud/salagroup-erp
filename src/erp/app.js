@@ -94,12 +94,12 @@ dash.draw('tb_empresa', (tb) => {
   if (d.status !== 'ok') { tb.replaceChildren(); return; }
   const [a, b] = SP.rango();
   const emp = dash.params().emp || 'shell';
-  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['servicio_deuda', 'm']];
+  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['bancarios', 'm'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['servicio_deuda', 'm']];
   tb.replaceChildren(...d.data.filter((r) => r.empresa === emp && r.mes >= a && r.mes <= b).map((r) => {
     const tr = document.createElement('tr');
     tr.dataset.key = `${r.empresa},${r.mes}`;
     const td0 = document.createElement('td'); td0.textContent = SP.mes(r.mes) + (r.estimado ? ' (est.)' : ''); tr.appendChild(td0);
-    cols.forEach(([c, f]) => { const td = document.createElement('td'); td.textContent = SP[f](r[c]); if (r[c] < 0) td.classList.add('sp-neg'); tr.appendChild(td); });
+    cols.forEach(([c, f]) => { const td = document.createElement('td'); td.textContent = c === 'bancarios' ? SP[f](-r[c]) : SP[f](r[c]); if (c === 'bancarios') td.className = 'gs-col-banc'; else if (r[c] < 0) td.classList.add('sp-neg'); tr.appendChild(td); });
     return tr;
   }));
 });
@@ -187,15 +187,16 @@ dash.draw('tb_mensual', (tb) => {
   const d = dash.data('pl_mensual');
   if (d.status !== 'ok') { tb.replaceChildren(); return; }
   const [a, b] = SP.rango();
-  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['margen_bruto_pct', 'p'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['base', 't']];
+  const cols = [['ventas_netas', 'm'], ['margen_bruto', 'm'], ['margen_bruto_pct', 'p'], ['gastos_operativos', 'm'], ['ebitda', 'm'], ['ebitda_pct', 'p'], ['bancarios', 'm'], ['resultado_financiero', 'm'], ['resultado_neto', 'm'], ['base', 't']];
   tb.replaceChildren(...d.data.filter((r) => r.mes >= a && r.mes <= b).map((r) => {
     const tr = document.createElement('tr');
     tr.dataset.key = r.mes;
     const td0 = document.createElement('td'); td0.textContent = SP.mes(r.mes); tr.appendChild(td0);
     cols.forEach(([c, f]) => {
       const td = document.createElement('td');
-      td.textContent = f === 't' ? r[c] : SP[f](r[c]);
-      if (f !== 't' && r[c] < 0) td.classList.add('sp-neg');
+      td.textContent = f === 't' ? r[c] : c === 'bancarios' ? SP[f](-r[c]) : SP[f](r[c]);
+      if (c === 'bancarios') td.className = 'gs-col-banc';
+      else if (f !== 't' && r[c] < 0) td.classList.add('sp-neg');
       tr.appendChild(td);
     });
     return tr;
