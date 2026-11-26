@@ -881,6 +881,77 @@ montar('pie', (el) => {
   foot.append(b1, b2, b3, s1, s2, s3);
   el.append(rid, foot);
 });
+/* detalle de impuestos: subtotal, IVA por alícuota, percepciones y otros; el total se calcula solo */
+const IMP_IVA = [['21', 0.21], ['105', 0.105], ['27', 0.27]];
+const IMP_OTROS = [['no_gravado', 'No gravado'], ['exento', 'Exento'], ['perc_iva', 'Percepción IVA'], ['perc_iibb', 'Percepción IIBB'], ['imp_internos', 'Impuestos internos'], ['otros_imp', 'Otros impuestos y tasas (ITC, etc.)']];
+const IMP_CAMPOS = [...IMP_IVA.flatMap(([k]) => [`neto_${k}`, `iva_${k}`]), ...IMP_OTROS.map(([k]) => k)];
+const r2 = (x) => Math.round(x * 100) / 100;
+montar('impuestos', (box) => {
+  const form = box.closest('form'); if (!form) return;
+  const campoTotal = box.dataset.total || 'total';
+  const num = (name, label, ro) => { const l = e2('label', null, label); const i = e2('input'); i.type = 'number'; i.step = '0.01'; i.name = name; if (ro) { i.readOnly = true; i.tabIndex = -1; i.className = 'gs-imp-calc'; } else i.min = '0'; l.appendChild(i); return [l, i]; };
+  box.appendChild(e2('p', 'gs-imp-tit', 'Importes e impuestos'));
+  const g1 = e2('div', 'gs-imp-grid');
+  const ivas = {};
+  IMP_IVA.forEach(([k, t]) => {
+    const pct = String(t * 100).replace('.', ',');
+    const [l1, n] = num(`neto_${k}`, `Neto gravado ${pct}%`);
+    const [l2, iva] = num(`iva_${k}`, `IVA ${pct}%`);
+    ivas[k] = { n, iva, t };
+    iva.addEventListener('input', () => { iva.dataset.manual = '1'; calc(); });
+    n.addEventListener('input', () => { if (!iva.dataset.manual) iva.value = n.value === '' ? '' : r2(Number(n.value) * t); calc(); });
+    g1.append(l1, l2);
+  });
+  const g2 = e2('div', 'gs-imp-grid');
+  const otros = IMP_OTROS.map(([k, t]) => { const [l, i] = num(k, t); i.addEventListener('input', () => calc()); g2.appendChild(l); return i; });
+  const g3 = e2('div', 'gs-imp-grid gs-imp-tot');
+  const [lS, sub] = num('neto', 'Subtotal (neto gravado)', true);
+  const [lI, imp] = num('impuestos', 'Total impuestos', true);
+  const [lT, tot] = num(campoTotal, 'Total', true);
+  const nota = e2('p', 'gs-imp-nota'); nota.hidden = true;
+  g3.append(lS, lI, lT);
+  box.append(g1, g2, g3, nota);
+  const v = (i) => Number(i.value) || 0;
+  const conDetalle = () => IMP_CAMPOS.some((k) => form.elements.namedItem(k) && form.elements.namedItem(k).value !== '');
+  function calc() {
+    const neto = Object.values(ivas).reduce((a, x) => a + v(x.n), 0);
+    const iva = Object.values(ivas).reduce((a, x) => a + v(x.iva), 0);
+    const [ng, ex, pi, pb, ii, oi] = otros.map(v);
+    sub.value = r2(neto); imp.value = r2(iva + pi + pb + ii + oi); tot.value = r2(neto + iva + ng + ex + pi + pb + ii + oi);
+    nota.hidden = true;
+  }
+  form.addEventListener('reset', () => setTimeout(() => { Object.values(ivas).forEach((x) => { delete x.iva.dataset.manual; }); nota.hidden = true; }));
+  form.addEventListener('gs-cargado', () => {
+    Object.values(ivas).forEach((x) => { delete x.iva.dataset.manual; if (x.iva.value !== '' && x.n.value !== '' && Math.abs(v(x.iva) - r2(v(x.n) * x.t)) > 0.01) x.iva.dataset.manual = '1'; });
+    if (conDetalle()) calc();
+    else if (v(tot) > 0) { nota.textContent = 'Este registro se cargó sin detalle de impuestos. Completá el detalle para recalcular el total.'; nota.hidden = false; }
+  });
+  // el total es obligatorio y mayor a cero (los campos calculados no los valida el navegador)
+  form.addEventListener('submit', (e) => {
+    if (v(tot) > 0) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    nota.textContent = 'Cargá al menos un importe: el total no puede ser cero.'; nota.hidden = false;
+    const primero = ivas['21'].n; primero.focus();
+  }, true);
+});
+/* estado del compromiso elegido con botones al cargarlo o editarlo */
+montar('estado_sel', (box) => {
+  const form = box.closest('form'); if (!form) return;
+  const ds = form.dataset.ds;
+  const tb = document.querySelector(`tbody[data-ds="${ds}"][data-st]`);
+  const estados = tb && window.ERP_ESTADOS[tb.dataset.st];
+  if (!estados) return;
+  const def = form.dataset.estado || estados[0];
+  const inp = e2('input'); inp.type = 'hidden'; inp.name = 'estado'; inp.setAttribute('value', def);
+  box.append(e2('span', 'gs-estado-lab', 'Estado'), inp);
+  const grupo = e2('div', 'gs-estado-btns'); grupo.setAttribute('role', 'radiogroup'); grupo.setAttribute('aria-label', 'Estado');
+  const botones = estados.map((s) => { const b = e2('button', 'gs-chip-st', s); b.type = 'button'; b.setAttribute('role', 'radio'); b.onclick = () => { inp.value = s; sync(); }; return b; });
+  const sync = () => botones.forEach((b) => { const on = b.textContent === (inp.value || def); b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+  grupo.append(...botones); box.appendChild(grupo);
+  form.addEventListener('reset', () => setTimeout(() => { inp.value = def; sync(); }));
+  form.addEventListener('gs-cargado', sync);
+  sync();
+});
 const EVS = [['cumple', 'Cumpleaños'], ['cheques', 'Cheques (a emitir, a vencer, vencidos, rechazados)'], ['venc', 'Vencimientos administrativos'], ['cuentas', 'Cobros y pagos pendientes'], ['planes', 'Planes de pago ARCA/ARBA'], ['prestamos', 'Vencimiento de préstamos'], ['deuda', 'Uso de la calificación bancaria'], ['rentabilidad', 'Caídas de rentabilidad (EBITDA negativo)'], ['flota', 'VTV y seguros de flota'], ['mant', 'Mantenimientos de flota'], ['ordenes', 'Órdenes de trabajo'], ['compras', 'Pagos a proveedores']];
 const PERFS = ['Administración', 'Finanzas', 'Tesorería', 'Recursos Humanos', 'Operaciones', 'Comercial', 'Gerencia'];
 montar('cfg_filas', (tb) => {

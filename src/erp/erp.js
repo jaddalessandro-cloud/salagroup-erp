@@ -115,6 +115,7 @@ ERP.boton = (fila, kind, ds, opts = {}) => {
     const pop = el('div', 'gs-pop');
     pop.onclick = (e) => e.stopPropagation();
     pop.appendChild(el('p', 'gs-pop-k', `Estado actual: ${fila.estado || '—'}`));
+    pop.appendChild(el('p', 'gs-pop-s', 'Elegí el nuevo estado:'));
     if (fila.estado_fecha || fila.modificado) pop.appendChild(el('p', 'gs-pop-s', `Último cambio: ${fmtFH(fila.modificado || fila.estado_fecha)}${fila.modificado_por ? ' · ' + ERP.nombre(fila.modificado_por) : ''}`));
     if (typeof fila.comprobante === 'string' && /^(\/|https:\/\/)/.test(fila.comprobante)) { const a = el('a', null, 'Ver comprobante'); a.href = fila.comprobante; a.target = '_blank'; a.rel = 'noopener'; pop.appendChild(a); }
     const msg = el('p', 'gs-pop-err');
@@ -135,17 +136,18 @@ ERP.boton = (fila, kind, ds, opts = {}) => {
           return;
         }
         o.disabled = true;
+        let aviso = '';
         try {
           const extra = {};
           if (esPago) {
             extra.fecha_confirmacion = new Date().toISOString();
             const f = pop.querySelector('.gs-pop-file input');
-            if (f && f.files && f.files[0]) extra.comprobante = (await ERP.subirAdjunto(f.files[0])).url;
+            if (f && f.files && f.files[0]) { try { extra.comprobante = (await ERP.subirAdjunto(f.files[0])).url; } catch (ex) { aviso = `Estado actualizado, pero sin el comprobante: ${ex.message}`; } }
           }
           await ERP.cambiarEstado(ds, fila, s, extra);
-          pop.remove();
-        } catch {
-          msg.hidden = false; msg.textContent = 'No se guardó: hace falta ser editor del tablero.'; o.disabled = false;
+          if (aviso) { lista.remove(); msg.hidden = false; msg.textContent = aviso; setTimeout(() => pop.remove(), 6000); } else pop.remove();
+        } catch (ex) {
+          msg.hidden = false; msg.textContent = ERP.motivo(ex); o.disabled = false;
         }
       };
       lista.appendChild(o);
@@ -183,6 +185,7 @@ ERP.editar = (ds, fila) => {
     if (e.tagName === 'SELECT' && v !== '' && e.value !== String(v)) { e.add(new Option(String(v), String(v))); e.value = String(v); }
   }
   form.querySelectorAll('select[data-draw]').forEach((s) => dash.draw(s.dataset.draw));
+  form.dispatchEvent(new Event('gs-cargado'));
   form.querySelectorAll('input[name="_rid"]').forEach((i) => { i.value = fila.id; });
   modoEdicion(form, true);
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -226,6 +229,11 @@ ERP.tabla = (tb, rows, o) => {
         try { const db = await ERP.db(); await db.doc(`${o.path}/${r.id}`).delete(); await ERP.log(db, o.formDs || o.ds, r.id, 'Baja', JSON.stringify(r).slice(0, 600)); } catch { x.textContent = 'No se pudo borrar'; }
       };
       ta.append(e, x);
+    }
+    if (ERP.puedeEditar() && ESTADOS[o.kind] && o.kind !== 'compra') {
+      const s = el('button', 'gs-act gs-act-estado', 'Cambiar estado ▾'); s.type = 'button';
+      s.onclick = (ev) => { ev.stopPropagation(); const st = tr.querySelector('.gs-st'); if (st) st.click(); };
+      ta.prepend(s);
     }
     tr.appendChild(ta);
     return tr;

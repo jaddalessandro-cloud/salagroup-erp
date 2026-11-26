@@ -37,6 +37,7 @@ const arrancar = async () => {
     $('#err-texto').textContent = 'No se pudo conectar con el servidor. Revisá la conexión a internet y volvé a intentar.';
     return;
   }
+  if (!config.storageBucket && config.projectId) config.storageBucket = `${config.projectId}.firebasestorage.app`;
   const app = initializeApp(config);
   const auth = getAuth(app);
   const fs = initializeFirestore(app, { ignoreUndefinedProperties: true });

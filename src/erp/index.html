@@ -248,7 +248,7 @@
 <label class="gs-wide">Concepto<input name="concepto" required maxlength="160"></label>
 <label>Categoría<select class="dash-select" name="categoria"><option>Compras</option><option>Gastos operativos</option><option>Gastos administrativos</option><option>Servicios</option><option>Impuestos</option><option>Sueldos y cargas sociales</option><option>Honorarios</option><option>Mantenimiento</option><option>Proveedores</option><option>Seguros</option><option>Alquileres</option><option>Gastos bancarios</option><option>Deudas y préstamos</option><option>Otros conceptos</option></select></label>
 <label>Proveedor o beneficiario<input name="beneficiario" maxlength="120"></label>
-<label>Importe ($)<input type="number" name="importe" min="0" step="0.01" required></label>
+
 <label>Medio de pago<select class="dash-select" name="medio"><option>Transferencia</option><option>Cheque</option><option>Efectivo</option><option>Débito automático</option><option>Tarjeta</option><option>Otro</option></select></label>
 <label>Banco o caja de origen<input name="banco" list="lista-bancos" maxlength="60"></label>
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label>
@@ -260,6 +260,7 @@
 <label class="gs-wide">Observaciones<input name="observaciones" maxlength="300"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
+<div class="gs-imp" data-draw="impuestos" data-total="importe"></div>
 <p class="sp-note">Si el egreso paga una orden de compra o una factura ya cargada, poné su código en "Vincula a": así no se cuenta dos veces.</p>
 <div class="gs-pie" data-draw="pie"></div>
 </form></div>
@@ -537,10 +538,11 @@
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label>
 <label>Fecha<input type="date" name="fecha" required></label>
 <label>Vencimiento<input type="date" name="vencimiento" required></label>
-<label>Monto ($)<input type="number" name="monto" min="0" step="0.01" required></label>
+
 <label class="gs-wide">Link al documento en Drive<input type="url" name="link" placeholder="https://drive.google.com/…"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
+<div class="gs-imp" data-draw="impuestos" data-total="monto"></div>
 <div class="gs-pie" data-draw="pie"></div>
 </form>
 <div class="gs-leyenda" data-draw="ley"></div>
@@ -740,17 +742,18 @@
 <label>Tipo<select class="dash-select" name="tipo"><option>Recibida</option><option>Emitida</option></select></label>
 <label>Comprobante<select class="dash-select" name="comprobante"><option>Factura A</option><option>Factura B</option><option>Factura C</option><option>Nota de crédito</option><option>Nota de débito</option><option>Recibo</option><option>Otro</option></select></label>
 <label>Número<input name="numero" maxlength="30" placeholder="0001-00001234"></label><label class="gs-wide">Proveedor o cliente<select class="dash-select" name="tercero" required data-draw="sel_tercero" data-source="proveedores"></select><span class="gs-tercero-ayuda">Si no figura, cargalo primero: <button type="button" class="gs-act gs-go" data-go="adm-prov">Proveedores</button> <button type="button" class="gs-act gs-go" data-go="adm-cli">Clientes</button></span></label>
-<label>Fecha<input type="date" name="fecha" required></label><label>Vencimiento<input type="date" name="vence"></label><label>Neto ($)<input type="number" name="neto" step="0.01"></label><label>Total ($)<input type="number" name="total" step="0.01" required></label>
+<label>Fecha<input type="date" name="fecha" required></label><label>Vencimiento<input type="date" name="vence"></label>
 <label>Categoría<select class="dash-select" name="categoria"><option>Proveedores</option><option>Compras</option><option>Servicios</option><option>Mantenimiento</option><option>Honorarios</option><option>Seguros</option><option>Alquileres</option><option>Ventas</option><option>Otros conceptos</option></select></label>
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label><label class="gs-wide">Observaciones<input name="observaciones" maxlength="300"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
-<div class="gs-pie" data-draw="pie"></div>
+<div class="gs-imp" data-draw="impuestos" data-total="total"></div>
+<div class="gs-estado-sel" data-draw="estado_sel"></div><div class="gs-pie" data-draw="pie"></div>
 </form><div class="gs-leyenda" data-draw="ley"></div><div class="sp-card sp-tw sp-gap" id="tabla-fac">
 <div class="gs-tools" data-draw="tools" data-for="facturas" data-col="1"></div>
 <table class="sp-table gs-left" data-source="facturas" data-row-key="id">
-<thead><tr><th data-field="id">Código</th><th data-field="fecha">Fecha</th><th data-field="tipo">Tipo</th><th data-field="comprobante">Comprobante</th><th data-field="numero">Número</th><th data-field="tercero">Cliente o proveedor</th><th class=gs-num data-field="total">Total</th><th data-field="vence">Vence</th><th data-field="estado">Estado</th><th>Situación</th><th>Documentos</th><th></th></tr></thead>
-<tbody data-draw="tb_store" data-ds="facturas" data-path="data/erp/facturas" data-cols="id:t,fecha:d,tipo:t,comprobante:t,numero:t,tercero:t,total:m,vence:d,estado:t,sit:st,adjuntos:adj" data-orden="vence" data-st="factura" data-stfecha="vence"></tbody>
+<thead><tr><th data-field="id">Código</th><th data-field="fecha">Fecha</th><th data-field="tipo">Tipo</th><th data-field="comprobante">Comprobante</th><th data-field="numero">Número</th><th data-field="tercero">Cliente o proveedor</th><th class=gs-num data-field="neto">Subtotal</th><th class=gs-num data-field="impuestos">Impuestos</th><th class=gs-num data-field="total">Total</th><th data-field="vence">Vence</th><th data-field="estado">Estado</th><th>Situación</th><th>Documentos</th><th></th></tr></thead>
+<tbody data-draw="tb_store" data-ds="facturas" data-path="data/erp/facturas" data-cols="id:t,fecha:d,tipo:t,comprobante:t,numero:t,tercero:t,neto:m,impuestos:m,total:m,vence:d,estado:t,sit:st,adjuntos:adj" data-orden="vence" data-st="factura" data-stfecha="vence"></tbody>
 </table>
 </div></div>
 <div id="adm-con" data-subpanel="adm-con" hidden><h2>Contratos</h2><form class="sp-card gs-form" data-ds="contratos" data-estado="Vigente" id="form-con">
@@ -761,7 +764,7 @@
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label><label>Responsable<input name="responsable" maxlength="80"></label><label>Renovación<select class="dash-select" name="renovacion"><option>Manual</option><option>Automática</option><option>Sin renovación</option></select></label><label class="gs-wide">Observaciones<input name="observaciones" maxlength="300"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
-<div class="gs-pie" data-draw="pie"></div>
+<div class="gs-estado-sel" data-draw="estado_sel"></div><div class="gs-pie" data-draw="pie"></div>
 </form><div class="gs-leyenda" data-draw="ley"></div><div class="sp-card sp-tw sp-gap" id="tabla-con">
 <div class="gs-tools" data-draw="tools" data-for="contratos" data-col="1"></div>
 <table class="sp-table gs-left" data-source="contratos" data-row-key="id">
@@ -777,7 +780,7 @@
 <label class="gs-wide">Descripción<input name="descripcion" required maxlength="160"></label><label>Fecha<input type="date" name="fecha"></label><label>Vence<input type="date" name="vence"></label><label>Responsable<input name="responsable" maxlength="80"></label><label class="gs-wide">Link en Drive<input type="url" name="link" placeholder="https://drive.google.com/…"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
-<div class="gs-pie" data-draw="pie"></div>
+<div class="gs-estado-sel" data-draw="estado_sel"></div><div class="gs-pie" data-draw="pie"></div>
 </form><div class="sp-card sp-tw sp-gap" id="tabla-soc">
 <div class="gs-tools" data-draw="tools" data-for="societaria" data-col="1"></div>
 <table class="sp-table gs-left" data-source="societaria" data-row-key="id">
@@ -794,7 +797,7 @@
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label><label>Responsable<input name="responsable" maxlength="80"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
-<div class="gs-pie" data-draw="pie"></div>
+<div class="gs-estado-sel" data-draw="estado_sel"></div><div class="gs-pie" data-draw="pie"></div>
 </form><div class="gs-leyenda" data-draw="ley"></div><div class="sp-card sp-tw sp-gap" id="tabla-seg">
 <div class="gs-tools" data-draw="tools" data-for="seguros" data-col="1"></div>
 <table class="sp-table gs-left" data-source="seguros" data-row-key="id">
@@ -833,7 +836,7 @@
 <label class="gs-wide">Link al documento en Drive<input type="url" name="link" placeholder="https://drive.google.com/…"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
-<div class="gs-pie" data-draw="pie"></div>
+<div class="gs-estado-sel" data-draw="estado_sel"></div><div class="gs-pie" data-draw="pie"></div>
 </form>
 <div class="gs-leyenda" data-draw="ley"></div>
 <div class="sp-card sp-tw sp-gap" id="tabla-venc">
@@ -1401,12 +1404,13 @@
 <label>Estación<select class="dash-select" name="estacion"><option>Grupo</option><option>Shell</option><option>YPF</option><option>Tolosa</option><option>Olmos</option></select></label>
 <label>Categoría<select class="dash-select" name="categoria"><option>Combustible</option><option>Lubricantes</option><option>Tienda</option><option>Mantenimiento</option><option>Servicios</option><option>Insumos</option><option>Otro</option></select></label>
 <label class="gs-wide">Concepto<input name="concepto" maxlength="200"></label>
-<label>Importe<input type="number" name="monto" min="0" step="0.01" required></label><label>Moneda<select class="dash-select" name="moneda"><option>ARS</option><option>USD</option></select></label>
+<label>Moneda<select class="dash-select" name="moneda"><option>ARS</option><option>USD</option></select></label>
 <label>Vencimiento del pago<input type="date" name="fecha_pago"></label><label>Nº de factura<input name="factura" maxlength="30"></label>
 <label>Responsable<input name="responsable" maxlength="80"></label>
 <label class="gs-wide">Observaciones<input name="observaciones" maxlength="300"></label>
 <label class="gs-wide">Adjuntar documento o comprobante<input type="file" name="_adjunto"></label>
 </div>
+<div class="gs-imp" data-draw="impuestos" data-total="monto"></div>
 <p class="sp-note">El estado (pendiente de pago, pago parcial, pagada, vencida) se actualiza solo con los pagos que se registran en Pago a proveedores.</p>
 <div class="gs-pie" data-draw="pie"></div>
 </form>

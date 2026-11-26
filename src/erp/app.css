@@ -370,3 +370,21 @@ tbody[data-ds] td:first-child { cursor: pointer; color: var(--sp-acc); font-weig
 .gs-bien-btn { margin-top: 10px; padding: 12px 28px !important; font-size: 15px !important; background: var(--sg-sky, #29B8EC) !important; color: #0E2A47 !important; }
 @media print { .gs-bienvenida { display: none !important; } }
 .gs-tercero-ayuda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 400; }
+.gs-estado-sel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; }
+.gs-estado-lab { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 700; margin-right: 4px; }
+.gs-estado-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.gs-chip-st { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--color-border-line); background: var(--color-bg); color: var(--color-fg); cursor: pointer; }
+.gs-chip-st:hover { border-color: var(--sg-sky-d); }
+.gs-chip-st.on { background: var(--sg-ink); border-color: var(--sg-ink); color: #fff; font-weight: 700; }
+.gs-act-estado { font-weight: 700; }
+.gs-pop-ops .gs-act { font-size: 13px; padding: 6px 10px; }
+.gs-imp { border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 10px 12px 12px; margin: 10px 0; background: var(--color-panel); }
+.gs-imp-tit { margin: 0 0 6px; font-weight: 700; font-size: 13px; }
+.gs-imp-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 8px; }
+.gs-imp-grid label { display: flex; flex-direction: column; gap: 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs-imp-grid input { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: 8px; background: var(--color-bg); color: var(--color-fg); text-align: right; font-variant-numeric: tabular-nums; }
+.gs-imp-tot { border-top: 1px solid var(--color-border-line); padding-top: 8px; margin-bottom: 0; }
+.gs-imp-tot label { font-weight: 700; color: var(--color-fg); }
+input.gs-imp-calc { background: transparent; border-color: transparent; font-weight: 700; }
+.gs-imp-nota { margin: 6px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-warn); }
+@container (max-width: 980px) { .gs-imp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
