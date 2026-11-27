@@ -29,6 +29,15 @@
 <p class="sp-note">La sincronización es de solo lectura: el sistema lista carpetas y archivos para clasificarlos, y nunca crea, mueve, modifica ni borra documentos de Drive. Corre sola cada 6 horas.</p>
 </div>
 
+<h2>Planillas vinculadas de Drive</h2>
+<form class="sp-card" id="pla-form">
+<p class="sp-note">El sistema lee la planilla cada 2 horas y actualiza los tableros solo (planes de pago, calendario de cuotas, alertas). Es de solo lectura: nunca modifica el archivo. La planilla tiene que estar compartida, como Lector, con la cuenta del servidor.</p>
+<div class="gs-fields"><label class="gs-wide">Enlace de la planilla PLANES DE PAGO<input name="planes_pago" maxlength="300" placeholder="https://docs.google.com/spreadsheets/d/…"></label></div>
+<p class="sp-take gs-take-s" id="pla-estado">—</p>
+<button type="submit" class="gs-btn" data-solo-admin hidden>Guardar y actualizar ahora</button>
+<p class="us-msg" id="pla-msg" role="status" hidden></p>
+</form>
+
 <div data-solo-admin hidden>
 <h2>Respaldos y registro de seguridad</h2>
 <div class="sp-card">

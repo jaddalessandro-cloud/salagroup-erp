@@ -150,7 +150,34 @@ export function montarPaneles(ctx, datos, user, role, acciones) {
     await dl.save({ filename: `salagroup-erp_copia_${new Date().toISOString().slice(0, 10)}.json`, data: JSON.stringify(paquete), mime: 'application/json' });
   }));
 
-  const todo = () => { dibujarUsuarios(); dibujarDrive(); dibujarRespaldo(); };
+  /* planillas vinculadas de Drive */
+  const cfgPlanillas = () => { const c = window.dash.data('config'); return ((c && c.data) || []).find((r) => r.id === 'planillas') || {}; };
+  const dibujarPlanillas = () => {
+    const f = $('#pla-form'); if (!f) return;
+    const inp = f.elements.namedItem('planes_pago');
+    inp.readOnly = !admin;
+    if (document.activeElement !== inp && !f.dataset.sucio) inp.value = cfgPlanillas().planes_pago || '';
+    const s = datos.sistema.planillas; const e = $('#pla-estado');
+    const p = s && s.planes_pago;
+    e.textContent = !p ? 'Todavía no se leyó la planilla.' : p.estado === 'ok' ? `Última lectura: ${fecha(s.ultima)} · ${p.archivo} (modificada en Drive el ${fecha(p.modificado)}) · ${p.filas} planes.` : p.estado === 'error' ? `Error en la última lectura (${fecha(s.ultima)}): ${p.error}` : 'Sin planilla vinculada.';
+  };
+  document.querySelectorAll('#pla-form').forEach((f) => {
+    f.addEventListener('input', () => { f.dataset.sucio = '1'; });
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const b = f.querySelector('button[type="submit"]'); b.disabled = true; msg('#pla-msg', 'Guardando y leyendo la planilla…');
+      try {
+        const { id: _i, ...resto } = cfgPlanillas();
+        await datos.db.doc('data/erp/config/planillas').set({ ...resto, planes_pago: f.elements.namedItem('planes_pago').value.trim(), modificado: new Date().toISOString(), modificado_por: user.uid });
+        delete f.dataset.sucio;
+        const r = await ctx.llamar('actualizarPlanillasAhora')({});
+        const p = r.planes_pago || {};
+        msg('#pla-msg', p.estado === 'ok' ? `Listo: ${p.filas} planes leídos de ${p.archivo}.` : p.error || 'Sin planilla vinculada.', p.estado === 'ok' ? 'ok' : 'err');
+      } catch (e) { msg('#pla-msg', textoError(e), 'err'); } finally { b.disabled = false; }
+    });
+  });
+
+  const todo = () => { dibujarUsuarios(); dibujarDrive(); dibujarRespaldo(); dibujarPlanillas(); };
   datos.alCambiar(todo);
   todo();
 }

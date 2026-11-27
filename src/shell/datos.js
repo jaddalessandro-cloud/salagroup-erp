@@ -69,7 +69,7 @@ export function crearDatos(fs) {
   }, () => { listoUs(); });
 
   // estado del servidor
-  ['drive', 'respaldo'].forEach((k) => onSnapshot(doc(fs, `sistema/${k}`), (d) => { sistema[k] = d.exists() ? d.data() : null; avisar(); }, () => {}));
+  ['drive', 'respaldo', 'planillas'].forEach((k) => onSnapshot(doc(fs, `sistema/${k}`), (d) => { sistema[k] = d.exists() ? d.data() : null; avisar(); }, () => {}));
 
   const leer = (id) => {
     if (id === 'config') {

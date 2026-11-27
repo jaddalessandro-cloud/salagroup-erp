@@ -27,7 +27,7 @@
   /* todas las cuotas, con su estado */
   dash.calc('planes_cuotas', {
     title: 'Cuotas de planes de pago',
-    description: 'Cuotas de la planilla de planes (mensuales desde el próximo débito informado el 24/11/2026) y de los planes propios, con lo pagado, los intereses y el estado.',
+    description: 'Cuotas de la planilla de planes (mensuales desde el próximo débito informado a la fecha de la planilla) y de los planes propios, con lo pagado, los intereses y el estado.',
     inputs: ['planes_pago', 'planes_fin', 'plan_cuotas'],
     fn: (planilla, propios, estados) => {
       const est = Object.fromEntries((estados || []).map((e) => [e.id, { pagado: e.pagado, intereses: e.intereses, fecha_pago: e.fecha_pago, medio: e.medio, operacion: e.operacion }]));
@@ -37,7 +37,7 @@
         const base = { origen: 'Planilla', plan: `${r.organismo || ''} ${r.plan}`.trim(), plan_id: r.plan, empresa: r.empresa, acreedor: r.organismo || '', obligaciones: r.obligaciones || '', banco: r.banco_debito || '' };
         if (r.tipo === 'Plan') {
           const pend = n(r.cuotas_pendientes); if (!pend || !r.fecha_debito) return;
-          const primero = window.SP_PROX_DEBITO(r.fecha_debito, ANCLA);
+          const primero = window.SP_PROX_DEBITO(r.fecha_debito, r.ref || ANCLA);
           for (let k = 0; k < pend; k++) {
             const nro = n(r.cuotas_total) - pend + 1 + k;
             const id = clave(`PP-${r.plan}-${nro}`);
@@ -67,6 +67,8 @@
   const mesSel = () => dash.params().plcal_mes || hoy().slice(0, 7);
   const setMes = (m) => dash.setParams({ plcal_mes: m });
   let diaSel = null; let abierta = null;
+
+  dash.draw('planes_fuente', (e) => { const r = rows('planes_pago').find((x) => x.ref); e.textContent = r ? `(Drive, versión del ${ff(r.ref)}, se actualiza sola)` : '(Drive, actualizada el 24/11/2026)'; });
 
   /* calendario */
   dash.draw('plcal_titulo', (e) => { const [y, m] = mesSel().split('-'); e.textContent = `${MESES[Number(m) - 1]} ${y}`; });

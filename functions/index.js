@@ -18,6 +18,7 @@ import { logger } from 'firebase-functions';
 import { randomInt } from 'node:crypto';
 import { DOMINIO, PERFILES, normalizarUsuario, errorUsuario, validarClave, claveProvisoria, perfilNombre } from './lib/reglas.js';
 import { recorrerCarpeta, partirFilas } from './lib/drive.js';
+import { leerPlanesDePago } from './lib/planillas.js';
 
 initializeApp();
 setGlobalOptions({ region: 'southamerica-east1', maxInstances: 5 });
@@ -165,7 +166,8 @@ export const auditar = onDocumentWrittenWithAuthContext('data/erp/{col}/{id}', a
 // Se conservan 30 días: los respaldos más viejos se borran solos.
 const DIAS_RESPALDO = 30;
 const respaldar = async (origen) => {
-  const { v1 } = await import('@google-cloud/firestore');
+  const modFs = await import('@google-cloud/firestore');
+  const v1 = modFs.v1 || (modFs.default && modFs.default.v1);
   const { getStorage } = await import('firebase-admin/storage');
   const cliente = new v1.FirestoreAdminClient();
   const proyecto = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
@@ -236,4 +238,45 @@ export const sincronizarDrive = onSchedule({ schedule: 'every 6 hours', timeZone
 export const sincronizarDriveAhora = onCall({ timeoutSeconds: 540, memory: '512MiB' }, async (req) => {
   exigirAdmin(req);
   return sincronizar();
+});
+
+/* ---------- planillas vinculadas de Drive (solo lectura) ---------- */
+// El Administrador pega el enlace de la planilla en Configuración (data/erp/config/planillas).
+// El servidor la descarga, la interpreta y reemplaza el conjunto de datos; nunca modifica el archivo.
+const LECTORES = { planes_pago: { nombre: 'PLANES DE PAGO', leer: leerPlanesDePago } };
+const idDeEnlace = (s) => { const t = String(s || '').trim(); const m = t.match(/\/d\/([\w-]{20,})/) || t.match(/[?&]id=([\w-]{20,})/); return m ? m[1] : (/^[\w-]{20,}$/.test(t) ? t : ''); };
+const actualizarPlanillas = async () => {
+  const { google } = await import('googleapis');
+  const gauth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive.readonly'] });
+  let cuenta = ''; try { cuenta = (await gauth.getCredentials()).client_email || ''; } catch { /* sin credenciales locales */ }
+  const drive = google.drive({ version: 'v3', auth: gauth });
+  const cfg = (await db.doc('data/erp/config/planillas').get()).data() || {};
+  const resultado = {};
+  for (const [ds, lector] of Object.entries(LECTORES)) {
+    const id = idDeEnlace(cfg[ds]);
+    if (!id) { resultado[ds] = { estado: 'sin vincular' }; continue; }
+    try {
+      const { data: meta } = await drive.files.get({ fileId: id, fields: 'id, name, mimeType, modifiedTime', supportsAllDrives: true });
+      const res = meta.mimeType === 'application/vnd.google-apps.spreadsheet'
+        ? await drive.files.export({ fileId: id, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }, { responseType: 'arraybuffer' })
+        : await drive.files.get({ fileId: id, alt: 'media', supportsAllDrives: true }, { responseType: 'arraybuffer' });
+      const filas = await lector.leer(Buffer.from(res.data));
+      if (!filas.length) throw new Error('la planilla no tiene filas reconocibles');
+      const ref = new Intl.DateTimeFormat('sv-SE', { timeZone: ZONA }).format(new Date(meta.modifiedTime));
+      await db.doc(`datasets/${ds}`).set({ rows: filas.map((f) => ({ ...f, ref })), columns: Object.keys(filas[0]).concat('ref'), fuente: `${meta.name} (Drive)`, origen: 'drive-planilla', archivo: id, modificado_drive: meta.modifiedTime, actualizado: FieldValue.serverTimestamp() });
+      resultado[ds] = { estado: 'ok', filas: filas.length, archivo: meta.name, modificado: meta.modifiedTime };
+    } catch (e) {
+      const sinAcceso = [403, 404].includes(e.code || (e.response && e.response.status));
+      resultado[ds] = { estado: 'error', error: sinAcceso ? `Sin acceso a ${lector.nombre}: compartila (Lector) con ${cuenta || "la cuenta del servidor"}.` : String(e.message || e).slice(0, 200) };
+    }
+  }
+  await db.doc('sistema/planillas').set({ ...resultado, cuenta, ultima: FieldValue.serverTimestamp() }, { merge: false });
+  return { ...resultado, cuenta };
+};
+export const actualizarPlanillasDrive = onSchedule({ schedule: 'every 2 hours', timeZone: ZONA, timeoutSeconds: 300, memory: '512MiB' }, async () => {
+  try { await actualizarPlanillas(); } catch (e) { logger.error('Planillas', e.message); }
+});
+export const actualizarPlanillasAhora = onCall({ timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+  exigirAdmin(req);
+  return actualizarPlanillas();
 });
