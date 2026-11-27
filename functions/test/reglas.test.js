@@ -63,3 +63,35 @@ test('planilla PLANES DE PAGO (datos de ejemplo)', async () => {
   assert.equal(r[0].empresa, 'Shell (DSB)'); assert.equal(r[0].fecha_debito, '2026-11-26'); assert.equal(r[0].banco_debito, 'Macro');
   assert.equal(r[1].nota, 'CADUCO REGULARIZAR');
 });
+test('planilla Situación (datos de ejemplo)', async () => {
+  const { default: ExcelJS } = await import('exceljs');
+  const { leerSituacion } = await import('../lib/planillas.js');
+  const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Bancos Shell');
+  ws.addRow(['SHELL', 'Empresa de prueba']);
+  ws.addRow(['Banco Uno', null, null, null, null, null, null, 'Banco Dos']);
+  ws.addRow(['Línea', 'Calificación', 'Saldo', 'Disponible', 'TNA', 'TEA', null, 'Línea', 'Calificación', 'Saldo']);
+  ws.addRow(['ACC', 100, 50, 50, null, null, null, 'ACC', null, null]);
+  ws.addRow(['VN', null, 0, 0, null, null, null, 'Valores Negociados', 300, 200]);
+  ws.addRow(['Total', 100, null, null, null, null, null, 'Total', 300]);
+  ws.addRow(['Préstamos', 'N°cuota/Plazo', 'Monto', 'Cuota', 'Saldo', 'Tasa', null, 'Préstamos', 'N°cuota/Plazo', 'Monto', 'Cuota', 'Saldo', 'Tasa']);
+  ws.addRow(['Pmo Amort', '3 de 12', 1200, 100, 900, 0.4, null, 'Pmo C/T', new Date('2026-12-04T00:00:00Z'), 500, null, 900, 0.4]);
+  ws.addRow(['Total', null, 1200, null, null, null, null, 'Total', null, 500]);
+  ws.addRow(['Total Calificación', null, 1300, null, null, null, null, 'Total calificación', null, 800]);
+  const r = await leerSituacion(await wb.xlsx.writeBuffer());
+  assert.deepEqual(r.map((x) => [x.banco, x.tipo, x.linea]), [['Banco Uno', 'Línea', 'ACC'], ['Banco Uno', 'Préstamo', 'Pmo Amort'], ['Banco Dos', 'Línea', 'Valores Negociados'], ['Banco Dos', 'Préstamo', 'Pmo C/T']]);
+  assert.equal(r[1].plazo, '3 de 12'); assert.equal(r[3].vencimiento, '2026-12-04'); assert.match(r[3].nota, /duplicado/);
+});
+test('planilla de cheques (datos de ejemplo)', async () => {
+  const { default: ExcelJS } = await import('exceljs');
+  const { leerCheques } = await import('../lib/planillas.js');
+  const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet('Base_Cheques');
+  ws.addRow(['Base']); ws.addRow(['nota']);
+  ws.addRow(['ID', 'Fila', 'Empresa emisora', 'Fecha de emisión', 'Nº de cheque', 'Banco emisor', 'Cuenta', 'Beneficiario', 'CUIT', 'Importe ($)', 'Fecha de pago / vencimiento', 'Tipo de cheque', 'Concepto', 'Sector', 'Estado registrado', 'Fecha débito efectivo', 'Rel', 'Observaciones']);
+  ws.addRow(['CH-1', 1, 'DSB', null, '123', 'Banco Uno', null, 'Proveedor SA', null, 1000, new Date('2026-11-28T00:00:00Z'), null, null, null, 'Emitido', null, null, '[Diagnóstico] Sin CUIT']);
+  ws.addRow(['CH-2', 2, 'CM', null, null, 'Banco Dos', null, null, null, 500, new Date('2026-11-30T00:00:00Z'), null, null, null, 'Rechazado']);
+  ws.addRow([null, null, null]);
+  const r = await leerCheques(await wb.xlsx.writeBuffer());
+  assert.equal(r.length, 2);
+  assert.equal(r[0].empresa, 'Shell (DSB)'); assert.equal(r[0].fecha_debito, '2026-11-30'); assert.equal(r[0].observaciones, 'Sin CUIT');
+  assert.equal(r[1].empresa, 'YPF (Comb. Magdalena)'); assert.equal(r[1].beneficiario, '(sin dato)'); assert.equal(r[1].estado, 'Rechazado');
+});

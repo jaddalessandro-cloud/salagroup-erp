@@ -18,7 +18,7 @@ import { logger } from 'firebase-functions';
 import { randomInt } from 'node:crypto';
 import { DOMINIO, PERFILES, normalizarUsuario, errorUsuario, validarClave, claveProvisoria, perfilNombre } from './lib/reglas.js';
 import { recorrerCarpeta, partirFilas } from './lib/drive.js';
-import { leerPlanesDePago } from './lib/planillas.js';
+import { leerPlanesDePago, leerSituacion, leerCheques } from './lib/planillas.js';
 
 initializeApp();
 setGlobalOptions({ region: 'southamerica-east1', maxInstances: 5 });
@@ -243,7 +243,11 @@ export const sincronizarDriveAhora = onCall({ timeoutSeconds: 540, memory: '512M
 /* ---------- planillas vinculadas de Drive (solo lectura) ---------- */
 // El Administrador pega el enlace de la planilla en Configuración (data/erp/config/planillas).
 // El servidor la descarga, la interpreta y reemplaza el conjunto de datos; nunca modifica el archivo.
-const LECTORES = { planes_pago: { nombre: 'PLANES DE PAGO', leer: leerPlanesDePago } };
+const LECTORES = {
+  planes_pago: { nombre: 'PLANES DE PAGO', leer: leerPlanesDePago },
+  lineas_bancarias: { nombre: 'Situación', leer: leerSituacion },
+  cheques: { nombre: 'Gestión de cheques emitidos', leer: leerCheques },
+};
 const idDeEnlace = (s) => { const t = String(s || '').trim(); const m = t.match(/\/d\/([\w-]{20,})/) || t.match(/[?&]id=([\w-]{20,})/); return m ? m[1] : (/^[\w-]{20,}$/.test(t) ? t : ''); };
 const actualizarPlanillas = async () => {
   const { google } = await import('googleapis');
