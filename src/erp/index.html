@@ -174,6 +174,7 @@
 <tr class="sp-tot"><td>Resultado neto (con gastos bancarios)</td><td data-draw="rk" data-source="pl_rangos" data-field="resultado_neto" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_resultado_neto" data-fmt="p">—</td></tr>
 <tr class="sp-tot gs-neto-sin"><td>Resultado neto sin gastos bancarios</td><td data-draw="rk" data-source="pl_rangos" data-field="neto_sin_banc" data-fmt="m" data-signo="1">—</td><td data-draw="rk" data-source="pl_rangos" data-field="pct_neto_sin_banc" data-fmt="p">—</td></tr>
 <tr class="sp-memo"><td>Memo: cuotas de préstamos y planes AFIP/ARCA pagadas (caja)</td><td data-draw="rk" data-source="pl_rangos" data-field="servicio_deuda" data-fmt="m">—</td><td></td></tr>
+<tr class="sp-memo"><td>Memo: meses con gastos bancarios reales (según extractos); el resto es estimado</td><td data-draw="rk" data-source="pl_rangos" data-field="banc_real" data-fmt="n">—</td><td></td></tr>
 </tbody>
 </table>
 </div>
@@ -220,6 +221,7 @@
 <tr class="sp-tot"><td>Resultado neto (con gastos bancarios)</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="resultado_neto" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_resultado_neto" data-fmt="p">—</td></tr>
 <tr class="sp-tot gs-neto-sin"><td>Resultado neto sin gastos bancarios</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="neto_sin_banc" data-fmt="m" data-signo="1">—</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="pct_neto_sin_banc" data-fmt="p">—</td></tr>
 <tr class="sp-memo"><td>Memo: cuotas de préstamos y planes AFIP/ARCA/ARBA (caja)</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="servicio_deuda" data-fmt="m">—</td><td></td></tr>
+<tr class="sp-memo"><td>Memo: meses con gastos bancarios reales (según extractos); el resto es estimado</td><td data-draw="ek" data-source="pl_empresas_rangos" data-empresa="sel" data-field="banc_real" data-fmt="n">—</td><td></td></tr>
 </tbody>
 </table>
 </div>
@@ -692,6 +694,9 @@
 </div>
 <div id="teso-extractos" data-subpanel="teso-extractos" hidden>
 <h2>Extractos bancarios</h2>
+<div class="sp-card sp-tw sp-gap"><h3>Gastos bancarios según extractos</h3>
+<table class="sp-table gs-left" data-source="gastos_banc_extractos" data-row-key="empresa,mes"><thead><tr><th data-field="mes">Mes</th><th data-field="empresa">Empresa</th><th class="gs-num" data-field="comisiones">Comisiones y mantenimiento</th><th class="gs-num" data-field="iva">IVA s/ comisiones</th><th class="gs-num" data-field="total">Gastos bancarios</th><th class="gs-num" data-field="imp_dc">Imp. débitos y créditos</th><th class="gs-num" data-field="intereses">Intereses</th><th class="gs-num" data-field="movimientos">Movimientos</th></tr></thead><tbody data-draw="tb_banc_ext"></tbody></table>
+<p class="sp-note">Cuando una empresa tiene extractos cargados para un mes, Resultados usa estos gastos bancarios reales en lugar de la estimación (porcentaje de las ventas). El impuesto a los débitos y créditos y los intereses no se suman a gastos bancarios.</p></div>
 <form class="sp-card gs-form" data-ds="extractos" data-estado="Cargado" id="form-ext">
 <h3>Cargar un extracto bancario</h3>
 <div class="gs-fields">

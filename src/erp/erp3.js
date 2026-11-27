@@ -70,6 +70,43 @@
 
   dash.draw('planes_fuente', (e) => { const r = rows('planes_pago').find((x) => x.ref); e.textContent = r ? `(Drive, versión del ${ff(r.ref)}, se actualiza sola)` : '(Drive, actualizada el 24/11/2026)'; });
 
+  /* ---------- gastos bancarios reales según los extractos cargados ---------- */
+  const EMPRESA_DE = { Shell: 'shell', YPF: 'ypf', Tolosa: 'tolosa', Olmos: 'olmos' };
+  const CLASES = [
+    ['intereses', /inter[eé]s|descubierto|acuerdo|adelanto/i],
+    ['imp_dc', /25\.?413|deb\.?\s*y?\s*cred|d[eé]b(ito)?s?\s*\/?\s*cr[eé]d|imp\.?\s*ley|ley\s*25/i],
+    ['iva', /\biva\b|i\.v\.a/i],
+    ['comisiones', /comisi|manten|mant\.|serv(icio)?\.?\s*(de\s*)?(cuenta|paquete)|paquete|chequera|cargo|gasto|costo|arancel|emisi[oó]n|seguro\s*(de\s*)?(saldo|cuenta)|cuota\s*(de\s*)?(cuenta|paquete|tarjeta)/i],
+  ];
+  const clasificar = (concepto) => { for (const [k, re] of CLASES) if (re.test(concepto)) return k; return null; };
+  window.ERP_CLASIF_BANC = clasificar;
+  dash.calc('gastos_banc_extractos', {
+    title: 'Gastos bancarios según extractos',
+    description: 'Débitos de los extractos bancarios cargados en Tesorería clasificados por concepto: comisiones y mantenimiento, IVA sobre comisiones, impuesto a los débitos y créditos e intereses. Gastos bancarios = comisiones + IVA (el impuesto a los débitos y créditos y los intereses se muestran aparte). Por empresa y mes.',
+    inputs: ['extractos', 'extracto_mov'],
+    fn: (extractos, movs) => {
+      const est = Object.fromEntries((extractos || []).map((x) => [x.id, x]));
+      const acc = {};
+      (movs || []).forEach((m) => {
+        const ex = est[m.extracto]; const emp = ex && EMPRESA_DE[ex.estacion];
+        if (!emp || !m.fecha || !(n(m.importe) < 0)) return;
+        const k = clasificar(String(m.concepto || '')); if (!k) return;
+        const mes = m.fecha.slice(0, 7);
+        const o = (acc[`${emp}|${mes}`] ??= { empresa: emp, mes, comisiones: 0, iva: 0, imp_dc: 0, intereses: 0, movimientos: 0 });
+        o[k] += -n(m.importe); o.movimientos += 1;
+      });
+      return Object.values(acc).map((o) => ({ ...o, total: r2(o.comisiones + o.iva) })).sort((a, b) => a.mes.localeCompare(b.mes) || a.empresa.localeCompare(b.empresa));
+    },
+  });
+  const EMP_TXT = { shell: 'Shell', ypf: 'YPF', tolosa: 'Alvemem Tolosa', olmos: 'Alvemem Olmos' };
+  dash.draw('tb_banc_ext', (tb) => {
+    const u = dash.params().emp || 'grupo';
+    const filtro = u === 'grupo' ? null : u === 'alvemem' ? ['tolosa', 'olmos'] : [u];
+    const rs = rows('gastos_banc_extractos').filter((r) => !filtro || filtro.includes(r.empresa));
+    if (!rs.length) { const tr = el('tr'); const td = el('td', 'gs-vacio', 'Todavía no hay extractos con gastos bancarios. Al importar el CSV de movimientos de un extracto, los débitos por comisiones, mantenimiento, IVA, impuesto a los débitos y créditos e intereses se clasifican solos.'); td.colSpan = 8; tr.appendChild(td); tb.replaceChildren(tr); return; }
+    tb.replaceChildren(...rs.map((r) => { const tr = el('tr'); [MESES[Number(r.mes.slice(5)) - 1].slice(0, 3) + ' ' + r.mes.slice(0, 4), EMP_TXT[r.empresa] || r.empresa].forEach((x) => tr.appendChild(el('td', null, x))); ['comisiones', 'iva', 'total', 'imp_dc', 'intereses'].forEach((k) => tr.appendChild(el('td', 'gs-num', $(r[k])))); tr.appendChild(el('td', 'gs-num', String(r.movimientos))); return tr; }));
+  });
+
   /* calendario */
   dash.draw('plcal_titulo', (e) => { const [y, m] = mesSel().split('-'); e.textContent = `${MESES[Number(m) - 1]} ${y}`; });
   dash.draw('plcal', (cont) => {
