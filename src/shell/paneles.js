@@ -107,8 +107,14 @@ export function montarPaneles(ctx, datos, user, role, acciones) {
   const dibujarRespaldo = () => {
     const e = $('#resp-estado'); if (!e) return;
     const s = datos.sistema.respaldo;
-    e.textContent = s && s.ultimo ? `Último respaldo automático: ${fecha(s.ultimo)} (${s.destino}).` : 'El respaldo automático corre todos los días a las 03:17 (hora de Buenos Aires). Todavía no hay ninguno registrado.';
+    const partes = [s && s.ultimo ? `Último respaldo: ${fecha(s.ultimo)} (${s.origen || 'automático'}). Se guardan 30 días.` : 'El respaldo automático corre todos los días a las 03:17 (hora de Buenos Aires). Todavía no hay ninguno registrado.'];
+    if (s && s.error && (!s.ultimo || (s.intento && s.intento.toMillis && s.ultimo.toMillis && s.intento.toMillis() > s.ultimo.toMillis()))) partes.push(`Último intento con error (${fecha(s.intento)}): ${s.error}`);
+    e.textContent = partes.join(' ');
   };
+  document.querySelectorAll('#resp-ahora').forEach((b) => b.addEventListener('click', async () => {
+    b.disabled = true; msg('#resp-msg', 'Iniciando el respaldo…');
+    try { await ctx.llamar('respaldarAhora')({}); msg('#resp-msg', 'Respaldo iniciado: en unos minutos queda completo.', 'ok'); } catch (e) { msg('#resp-msg', textoError(e), 'err'); } finally { b.disabled = false; }
+  }));
   if (admin) {
     const nombre = (uid) => (datos.usuarios[uid] && datos.usuarios[uid].nombre) || uid || '—';
     onSnapshot(query(collection(ctx.fs, 'accesos'), orderBy('fecha', 'desc'), limit(60)), (snap) => {

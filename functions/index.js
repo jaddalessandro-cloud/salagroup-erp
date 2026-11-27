@@ -161,19 +161,45 @@ export const auditar = onDocumentWrittenWithAuthContext('data/erp/{col}/{id}', a
 });
 
 /* ---------- respaldo diario de la base de datos ---------- */
-export const respaldoDiario = onSchedule({ schedule: 'every day 03:17', timeZone: ZONA, timeoutSeconds: 540 }, async () => {
+// Se guarda en el depósito de Storage del proyecto, carpeta respaldos/ (las reglas no la dejan leer desde la página).
+// Se conservan 30 días: los respaldos más viejos se borran solos.
+const DIAS_RESPALDO = 30;
+const respaldar = async (origen) => {
   const { v1 } = await import('@google-cloud/firestore');
+  const { getStorage } = await import('firebase-admin/storage');
   const cliente = new v1.FirestoreAdminClient();
   const proyecto = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
-  const bucket = process.env.BUCKET_RESPALDOS || `${proyecto}-respaldos`;
-  const fecha = new Intl.DateTimeFormat('sv-SE', { timeZone: ZONA }).format(new Date());
-  const [op] = await cliente.exportDocuments({
-    name: cliente.databasePath(proyecto, '(default)'),
-    outputUriPrefix: `gs://${bucket}/firestore/${fecha}`,
-    collectionIds: [],
-  });
-  await db.doc('sistema/respaldo').set({ ultimo: FieldValue.serverTimestamp(), destino: `gs://${bucket}/firestore/${fecha}`, operacion: op.name }, { merge: true });
-  logger.info('Respaldo iniciado', { destino: `gs://${bucket}/firestore/${fecha}` });
+  const bucket = process.env.BUCKET_RESPALDOS || `${proyecto}.firebasestorage.app`;
+  const ahora = new Date();
+  const fecha = new Intl.DateTimeFormat('sv-SE', { timeZone: ZONA }).format(ahora);
+  const hora = new Intl.DateTimeFormat('es-AR', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ahora).replace(':', '');
+  const destino = `gs://${bucket}/respaldos/firestore/${fecha}_${hora}`;
+  try {
+    const [op] = await cliente.exportDocuments({ name: cliente.databasePath(proyecto, '(default)'), outputUriPrefix: destino, collectionIds: [] });
+    // limpieza de respaldos viejos
+    let borrados = 0;
+    try {
+      const limite = new Date(ahora.getTime() - DIAS_RESPALDO * 86400000).toISOString().slice(0, 10);
+      const [archivos] = await getStorage().bucket(bucket).getFiles({ prefix: 'respaldos/firestore/' });
+      for (const f of archivos) { const d = f.name.split('/')[2] || ''; if (d.slice(0, 10) < limite) { await f.delete().catch(() => {}); borrados += 1; } }
+    } catch (e) { logger.warn('Limpieza de respaldos', e.message); }
+    await db.doc('sistema/respaldo').set({ ultimo: FieldValue.serverTimestamp(), destino, operacion: op.name, origen, error: null, borrados }, { merge: true });
+    logger.info('Respaldo iniciado', { destino });
+    return { destino };
+  } catch (e) {
+    const msg = String(e.message || e).slice(0, 300);
+    await db.doc('sistema/respaldo').set({ error: msg, intento: FieldValue.serverTimestamp() }, { merge: true });
+    throw new HttpsError('internal', `No se pudo hacer el respaldo: ${msg}`);
+  }
+};
+export const respaldoDiario = onSchedule({ schedule: 'every day 03:17', timeZone: ZONA, timeoutSeconds: 540 }, async () => {
+  try { await respaldar('automático'); } catch (e) { logger.error('Respaldo', e.message); }
+});
+export const respaldarAhora = onCall({ timeoutSeconds: 540 }, async (req) => {
+  const a = exigirAdmin(req);
+  const r = await respaldar('manual');
+  await registrarAcceso({ uid: a.uid, evento: 'Respaldo manual', detalle: r.destino, ...origen(req) });
+  return r;
 });
 
 /* ---------- Google Drive: ESTACIONES (solo lectura) ---------- */
